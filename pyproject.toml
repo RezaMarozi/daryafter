@@ -3,7 +3,7 @@ name = "daryafter"
 version = "0.1.0"
 description = "Free, open-source multi-connection download manager for Windows"
 readme = "README.md"
-authors = [{ name = "Reza Marozi", email = "marozireza2010@gmail.com" }]
+authors = [{ name = "Reza Marozi" }]
 keywords = ["download-manager", "downloader", "pyside6", "windows", "resume"]
 classifiers = [
     "Development Status :: 4 - Beta",
