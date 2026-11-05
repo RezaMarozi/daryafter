@@ -12,9 +12,9 @@ and resumed, a queue, timers, an app lock and a private mode.
 Screenshots are coming soon.
 
 When the images are ready, put them in docs/screenshots/ and uncomment:
-![Main window](docs/screenshots/main-window.png)
-![Lock screen](docs/screenshots/lock-screen.png)
-![Settings](docs/screenshots/settings.png)
+[Main window](docs/screenshots/main-window.png)
+[Lock screen](docs/screenshots/lock-screen.png)
+[Settings](docs/screenshots/settings.png)
 
 
 ## Features
