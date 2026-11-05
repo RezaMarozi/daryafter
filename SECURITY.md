@@ -6,12 +6,14 @@ Only the latest release (currently 0.1.x, beta) receives fixes.
 
 ## Reporting a vulnerability
 
-Please **do not open a public issue** for a security problem. Send an email to
-**marozireza2010@gmail.com** with:
+Please **do not open a public issue** for a security problem. Use GitHub's private reporting instead:
 
-- what you found and why it matters,
-- steps to reproduce it (Windows version, Python version, Daryafter version),
-- anything you already tried.
+1. Open the **Security** tab of this repository.
+2. Click **Report a vulnerability** and describe the problem.
+
+Include what you found and why it matters, steps to reproduce it (Windows version, Python version, Daryafter
+version), and anything you already tried. If you do not see the button, open a normal issue that says only
+that you want to report a security problem, **without details**, and a private channel will be arranged.
 
 This is a hobby project maintained by one person, so replies are best-effort, but reports are taken seriously.
 
