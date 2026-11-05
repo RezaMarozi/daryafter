@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self, tr("About {app}").format(app=APP_NAME),
             f"<b>{APP_NAME}</b> {VERSION} (beta)<br>"
-            + tr("Free, open-source download manager for Windows.")
+            + tr("Free, open-source download manager.")
             + f"<br><br>{tr('Author')}: {AUTHOR_NAME}<br>{tr('License')}: {LICENSE_NAME}<br>"
             + f'<a href="{REPO_URL}">{REPO_URL}</a>')
 

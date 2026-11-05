@@ -1,4 +1,4 @@
-"""Light/dark theme that follows the Windows setting (or a fixed choice)."""
+"""Light/dark theme that follows the system setting (or a fixed choice)."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
@@ -19,15 +19,68 @@ def colors() -> dict[str, str]:
     return _current
 
 
+def _portal_color_scheme() -> bool | None:
+    """Read the system color scheme from the XDG desktop portal."""
+    try:
+        from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage
+        bus = QDBusConnection.sessionBus()
+        if not bus.isConnected():
+            return None
+
+        portal = QDBusInterface(
+            "org.freedesktop.portal.Desktop",
+            "/org/freedesktop/portal/desktop",
+            "org.freedesktop.portal.Settings",
+            bus,
+        )
+        if not portal.isValid():
+            return None
+
+        reply = portal.call(
+            "Read",
+            "org.freedesktop.appearance",
+            "color-scheme",
+        )
+
+        if reply.type() != QDBusMessage.MessageType.ReplyMessage:
+            return None
+
+        value = reply.arguments()[0]
+
+        # PySide6 may expose the portal's variant with nested wrappers.
+        for _ in range(3):
+            if hasattr(value, "variant"):
+                value = value.variant()
+            else:
+                break
+
+        if value == 1:
+            return True
+        if value == 2:
+            return False
+
+    except Exception:
+        pass
+
+    return None
+
+
 def is_dark(mode: str) -> bool:
     if mode == "dark":
         return True
     if mode == "light":
         return False
+
     try:
-        return QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        scheme = QGuiApplication.styleHints().colorScheme()
+        if scheme == Qt.ColorScheme.Dark:
+            return True
+        if scheme == Qt.ColorScheme.Light:
+            return False
     except Exception:
-        return False
+        pass
+
+    return _portal_color_scheme() is True
 
 
 def _stylesheet(c: dict[str, str]) -> str:

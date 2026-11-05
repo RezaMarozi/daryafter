@@ -32,3 +32,8 @@ dist/
 .idea/
 Thumbs.db
 Desktop.ini
+# Local packaging build artifacts
+packaging/src/
+packaging/pkg/
+packaging/*.tar.gz
+packaging/*.pkg.tar.zst

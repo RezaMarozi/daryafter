@@ -1,10 +1,11 @@
 # Daryafter
 
-Free, open-source download manager for Windows 10/11. Multi-connection downloads that can be paused
+Free, open-source download manager for Windows 10/11 and Linux. Multi-connection downloads that can be paused
 and resumed, a queue, timers, an app lock and a private mode.
 
-> **Status: Beta (0.1.0).** Tested with **Python 3.12.10** on 64-bit Windows only. Python 3.13 and 3.14
-> may work but have not been tested. Expect rough edges; please report them in
+> **Status: Beta (0.1.1).** Linux tested on **Arch Linux with Python 3.14.9**.
+> Windows was previously tested with **Python 3.12.10**, but needs retesting after the Linux changes.
+> Other Python versions and distributions may work but have not all been tested. Expect rough edges; please report them in
 > [Issues](https://github.com/RezaMarozi/daryafter/issues).
 
 ## Screenshots
@@ -30,7 +31,7 @@ Screenshots are coming soon.
 - **Timers**: start, stop or disconnect at a time of day, once or repeating.
 - **Privacy**: app lock with a password, private mode, "clear history" that also wipes the database file.
 - **Also**: offline mode, refresh an expired link, optional checksum check, proxy support (system, none
-  or manual, including SOCKS), light/dark theme that follows Windows, notification-area icon, an offer to
+  or manual, including SOCKS), light/dark theme that follows the system, notification-area icon, an offer to
   download links you copy, and a command-line downloader.
 
 Daryafter downloads plain HTTP/HTTPS file links. It does not do torrents or FTP, and it does not extract
@@ -71,6 +72,28 @@ Options (add them after `run.bat` in a Command Prompt):
 If the program closes at once, run `.venv\Scripts\python -m daryafter` in a Command Prompt to see the error.
 The log file is `%APPDATA%\Daryafter\daryafter.log`.
 
+## Install on Linux
+
+1. Install Python **3.12 or newer**, including `venv` support.
+2. Download or clone this project and open a terminal in its directory.
+3. Run `chmod +x run.sh`, then `./run.sh`.
+
+The first launch creates `.venv` and installs the required libraries using pip.
+An internet connection is needed for the initial setup.
+
+You can pass application options directly:
+
+    ./run.sh --private
+    ./run.sh --normal
+    ./run.sh --portable
+    ./run.sh --data-dir ~/Downloads/daryafter-data
+    ./run.sh "https://example.com/file.zip"
+
+If startup fails, run `.venv/bin/python -m daryafter` to see the error.
+The default data directory is `~/.local/share/daryafter/`.
+
+Wayland idle-time detection for automatic app locking is not currently supported.
+
 ## App lock, private mode and history
 
 - **App lock** (Settings > Privacy): with a password set, Daryafter starts locked. Downloads keep running
@@ -86,7 +109,7 @@ The log file is `%APPDATA%\Daryafter\daryafter.log`.
   settings are read without being changed, so the app lock still applies.
 - **Clear history** (More menu or Settings > Privacy): removes finished and failed downloads from the list
   and wipes them from the database file. Downloaded files are kept.
-- Saved passwords are encrypted with Windows DPAPI (tied to your Windows user) and can be switched off.
+- On Windows, saved passwords are encrypted with Windows DPAPI (tied to your Windows user). This protection is platform-specific. Saving passwords can be switched off.
 
 ## Timers and queue
 
@@ -107,12 +130,12 @@ speed at the end. Options: `-o FOLDER`, `-n NAME`, `-y`, `-c N`, `--limit KB/s`,
 
 ## Where your data is
 
-`%APPDATA%\Daryafter\` holds `daryafter.db` (download list and settings, including the password hash) and
-`daryafter.log`. With `--portable` it is the `data` folder next to the program. Private mode writes nothing.
+On Windows, `%APPDATA%\Daryafter\` holds `daryafter.db` and `daryafter.log`. On Linux, the default location is `~/.local/share/daryafter/`.
+With `--portable`, data is stored in the `data` folder next to the program. Private mode writes nothing.
 
 ## Tests
 
-    python -m unittest discover -s tests -t .
+    python -m pytest -q
     python -m tests.ui_smoke
 
 The engine is tested against a local test server (ranges, resume, restart, flaky connections, limits,
@@ -127,7 +150,7 @@ Daryafter uses these libraries (and their own dependencies, which come with them
 |---|---|---|
 | [PySide6 (Qt for Python)](https://pypi.org/project/PySide6/) | the graphical interface | LGPL v3 (also GPL / commercial) |
 | [httpx](https://pypi.org/project/httpx/) | network requests | BSD-3-Clause |
-| [truststore](https://pypi.org/project/truststore/) | use the Windows certificate store | MIT |
+| [truststore](https://pypi.org/project/truststore/) | use the platform certificate store when available | MIT |
 
 Check each package page on PyPI for its exact license. The `.whl` files in `Libs.zip` are the unmodified
 official packages and carry their own license files.

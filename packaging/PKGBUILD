@@ -1,0 +1,44 @@
+pkgname=daryafter
+pkgver=0.1.1
+pkgrel=1
+pkgdesc="Free, open-source multi-connection download manager"
+arch=('any')
+url="https://github.com/RezaMarozi/daryafter"
+license=('MIT')
+depends=(
+    'python'
+    'pyside6'
+    'python-httpx'
+    'python-h2'
+    'python-socksio'
+    'python-truststore'
+)
+makedepends=(
+    'python-build'
+    'python-installer'
+    'python-setuptools'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+    /usr/bin/python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+
+    /usr/bin/python -m installer --destdir="$pkgdir" dist/*.whl
+    find "$pkgdir" -type d -name __pycache__ -prune -exec rm -rf {} +
+    find "$pkgdir" -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
+
+    install -Dm644 packaging/daryafter.desktop \
+        "$pkgdir/usr/share/applications/daryafter.desktop"
+
+    install -Dm644 packaging/daryafter.svg \
+        "$pkgdir/usr/share/icons/hicolor/scalable/apps/daryafter.svg"
+
+    install -Dm644 LICENSE \
+        "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

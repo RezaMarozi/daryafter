@@ -1,0 +1,20 @@
+pkgbase = daryafter
+	pkgdesc = Free, open-source multi-connection download manager
+	pkgver = 0.1.1
+	pkgrel = 1
+	url = https://github.com/RezaMarozi/daryafter
+	arch = any
+	license = MIT
+	makedepends = python-build
+	makedepends = python-installer
+	makedepends = python-setuptools
+	depends = python
+	depends = pyside6
+	depends = python-httpx
+	depends = python-h2
+	depends = python-socksio
+	depends = python-truststore
+	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/refs/tags/v0.1.1.tar.gz
+	sha256sums = SKIP
+
+pkgname = daryafter

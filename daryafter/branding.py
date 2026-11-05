@@ -3,7 +3,7 @@
 APP_NAME = "Daryafter"
 APP_ID = "Daryafter.Downloader"      # Windows AppUserModelID (taskbar grouping)
 ORG_NAME = "Daryafter"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 LICENSE_NAME = "MIT"
 AUTHOR_NAME = "Reza Marozi"
 REPO_URL = "https://github.com/RezaMarozi/daryafter"

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Daryafter
+Comment=Free, open-source multi-connection download manager
+Exec=daryafter %u
+Icon=daryafter
+Terminal=false
+Categories=Network;FileTransfer;
+StartupNotify=true
