@@ -42,11 +42,15 @@ videos from streaming sites (see the [Roadmap](#roadmap)).
    and tick **"Add python.exe to PATH"** in the installer.
 2. Download this project (**Code > Download ZIP**) and extract it.
 3. Get the libraries (they are not in this repository because `PySide6` is very large). Pick one:
-   - **Offline (recommended if your internet is limited):** download `Libs.zip` from
-     PASTE_LINK_HERE (more mirrors: PASTE_LINK_HERE) and extract it so that a `Libs` folder sits next to
-     `run.bat`. SHA-256 of `Libs.zip`: `PASTE_SHA256_HERE`.
-   - **Download them yourself:** get the separate `get_libs.bat` (PASTE_LINK_HERE), put it anywhere and
-     double-click it. It creates a `Libs` folder next to itself, trying well-known worldwide mirrors first
+   - **Offline (recommended if your internet is limited):** download
+     [`Libs.zip`](https://github.com/RezaMarozi/daryafter/releases/download/v0.1.0/Libs.zip) (more mirrors
+     will be added later), put it next to `run.bat`, right-click it and choose **Extract All**, so that a
+     `Libs` folder sits next to `run.bat`.
+     SHA-256 of `Libs.zip`: `774e3ccf527c7a45fc086d4469e5bc850f29bb3f3ed4d980725ee310f9b2f6bf`
+     (check it in a Command Prompt with `certutil -hashfile Libs.zip SHA256`).
+   - **Download them yourself:** get the separate
+     [`get_libs.bat`](https://github.com/RezaMarozi/daryafter/releases/download/v0.1.0/get_libs.bat),
+     put it anywhere and double-click it. It creates a `Libs` folder next to itself, trying well-known worldwide mirrors first
      and Iranian mirrors after that. Then move that `Libs` folder next to `run.bat`.
      Mirrors are third parties, so prefer the official PyPI or `Libs.zip` if you can.
    - **Do nothing:** if you have internet, `run.bat` downloads the libraries by itself.
@@ -142,8 +146,8 @@ Suggestions are welcome in [Issues](https://github.com/RezaMarozi/daryafter/issu
 
 ## Contributing, security, contact
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Author: Reza Marozi,
-<marozireza2010@gmail.com>.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Bugs and ideas go to
+[Issues](https://github.com/RezaMarozi/daryafter/issues). Author: [Reza Marozi](https://github.com/RezaMarozi).
 
 ## License
 
