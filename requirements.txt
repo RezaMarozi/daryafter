@@ -1,0 +1,3 @@
+httpx[http2,socks]>=0.27
+truststore>=0.9
+PySide6>=6.6

@@ -1,0 +1,34 @@
+# ---- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ---- this computer's Python environment and downloaded libraries ----------
+# (run.bat rebuilds .venv; Libs holds big .whl files, too large for Git)
+.venv/
+venv/
+Libs/
+
+# ---- personal data: never publish these -----------------------------------
+# portable mode keeps its database, settings and log here
+data/
+portable.flag
+# the database holds the download list, settings and the app-lock password hash
+*.db
+*.db-wal
+*.db-shm
+*.log
+.env
+
+# ---- build output (.exe packaging) ----------------------------------------
+build/
+dist/
+
+# ---- editors and Windows --------------------------------------------------
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
