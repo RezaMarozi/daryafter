@@ -23,10 +23,10 @@ portable.flag
 *.log
 .env
 
-# ---- build output (.exe packaging) ----------------------------------------
-build/
-dist/
-
+# ---- build output (.exe and Appimage packaging) ----------------------------------------
+/build/
+/dist/
+*.spec
 # ---- editors and Windows --------------------------------------------------
 .vscode/
 .idea/
@@ -37,3 +37,9 @@ packaging/src/
 packaging/pkg/
 packaging/*.tar.gz
 packaging/*.pkg.tar.zst
+
+/appimage_entry.py
+
+/AppDir/
+
+/*.AppImage

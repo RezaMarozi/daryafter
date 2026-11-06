@@ -74,6 +74,25 @@ The log file is `%APPDATA%\Daryafter\daryafter.log`.
 
 ## Install on Linux
 
+### AppImage
+
+1. Download `Daryafter-x86_64.AppImage` from the [GitHub Releases](https://github.com/RezaMarozi/daryafter/releases) page.
+2. Open a terminal in the download directory.
+3. Make it executable and launch it:
+
+       chmod +x Daryafter-x86_64.AppImage
+       ./Daryafter-x86_64.AppImage
+
+The AppImage does not require a separate Python installation. It is currently built for x86_64 Linux.
+
+You can pass application options directly:
+
+    ./Daryafter-x86_64.AppImage --private
+    ./Daryafter-x86_64.AppImage --normal
+    ./Daryafter-x86_64.AppImage "https://example.com/file.zip"
+
+### Run from source
+
 1. Install Python **3.12 or newer**, including `venv` support.
 2. Download or clone this project and open a terminal in its directory.
 3. Run `chmod +x run.sh`, then `./run.sh`.
