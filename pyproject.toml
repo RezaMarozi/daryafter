@@ -6,10 +6,12 @@ readme = "README.md"
 authors = [{ name = "Reza Marozi" }]
 keywords = ["download-manager", "downloader", "pyside6", "windows", "resume"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Operating System :: Microsoft :: Windows",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Internet :: WWW/HTTP",
+"Development Status :: 4 - Beta",
+"Operating System :: Microsoft :: Windows",
+"Programming Language :: Python :: 3.12",
+"Programming Language :: Python :: 3.13",
+"Programming Language :: Python :: 3.14",
+"Topic :: Internet :: WWW/HTTP",
 ]
 requires-python = ">=3.12"
 license = { text = "MIT" }
