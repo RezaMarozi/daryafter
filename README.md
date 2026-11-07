@@ -111,7 +111,25 @@ You can pass application options directly:
 If startup fails, run `.venv/bin/python -m daryafter` to see the error.
 The default data directory is `~/.local/share/daryafter/`.
 
-Wayland idle-time detection for automatic app locking is not currently supported.
+### Wayland and X11
+
+Daryafter runs natively on Wayland and X11. It detects the active display
+session and uses the corresponding Qt platform plugin.
+
+- **Wayland**: native Qt Wayland support, desktop-portal theme detection,
+  fractional scaling, and the `daryafter` application identity.
+- **X11**: uses the existing X11 integration.
+- **App-lock idle detection**:
+  - Windows uses the native `GetLastInputInfo` API.
+  - X11 uses the XScreenSaver extension.
+  - Wayland uses `ext-idle-notify-v1` when advertised by the compositor,
+    with a Mutter idle-monitor D-Bus fallback when that protocol is unavailable.
+  - If neither Wayland source is available, automatic idle-based locking
+    is unavailable. Daryafter does not use X11 idle detection as a Wayland fallback.
+
+Tray icons require a desktop StatusNotifier host. If no tray is available,
+completion and timer notifications use `notify-send` from `libnotify` when
+both it and a compatible desktop notification daemon are available.
 
 ## App lock, private mode and history
 
@@ -154,7 +172,7 @@ With `--portable`, data is stored in the `data` folder next to the program. Priv
 
 ## Tests
 
-    python -m pytest -q
+    python -m unittest discover -s tests -t .
     python -m tests.ui_smoke
 
 The engine is tested against a local test server (ranges, resume, restart, flaky connections, limits,

@@ -6,4 +6,5 @@ Exec=daryafter %u
 Icon=daryafter
 Terminal=false
 Categories=Network;FileTransfer;
+Keywords=download;manager;downloader;file transfer;internet;
 StartupNotify=true

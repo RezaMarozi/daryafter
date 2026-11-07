@@ -1,6 +1,6 @@
 pkgname=daryafter
 pkgver=0.1.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Free, open-source multi-connection download manager"
 arch=('any')
 url="https://github.com/RezaMarozi/daryafter"
@@ -8,10 +8,14 @@ license=('MIT')
 depends=(
     'python'
     'pyside6'
+    'qt6-wayland'
     'python-httpx'
     'python-h2'
     'python-socksio'
     'python-truststore'
+)
+optdepends=(
+    'libnotify: desktop notification fallback via notify-send'
 )
 makedepends=(
     'python-build'

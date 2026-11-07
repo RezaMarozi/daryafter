@@ -1,6 +1,8 @@
 """Light/dark theme that follows the system setting (or a fixed choice)."""
 from __future__ import annotations
 
+import os
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QPalette
 from PySide6.QtWidgets import QApplication
@@ -128,6 +130,21 @@ QSplitter::handle {{ background: {c['border']}; }}
 """
 
 
+def _ui_font(app: QApplication) -> QFont:
+    """The platform's own UI font (Segoe UI on Windows, Noto Sans/Ubuntu/... on Linux)."""
+    if os.name == "nt":
+        return QFont("Segoe UI", 10)
+    try:
+        from PySide6.QtGui import QFontDatabase
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont)
+        if font.pointSize() <= 0:
+            font.setPointSize(10)
+        font.setPointSize(max(9, min(font.pointSize(), 12)))
+        return font
+    except Exception:
+        return QFont("Noto Sans", 10)
+
+
 def apply_theme(app: QApplication, mode: str = "system") -> None:
     global _current
     try:                                   # Qt 6.8+: follow the system again, or force light/dark
@@ -149,5 +166,5 @@ def apply_theme(app: QApplication, mode: str = "system") -> None:
                       (QPalette.ColorRole.PlaceholderText, "muted")):
         pal.setColor(role, QColor(c[key]))
     app.setPalette(pal)
-    app.setFont(QFont("Segoe UI", 10))
+    app.setFont(_ui_font(app))
     app.setStyleSheet(_stylesheet(c))

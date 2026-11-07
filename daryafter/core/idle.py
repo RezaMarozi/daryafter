@@ -2,12 +2,17 @@
 
 Windows: native GetLastInputInfo API.
 X11: XScreenSaver extension (optional system libraries).
-Other environments, including Wayland: 0.0 if unsupported.
+Wayland: the standard ``ext-idle-notify-v1`` protocol through ``libwayland-client``
+(see :mod:`daryafter.core.idle_wayland`), with a GNOME Shell (Mutter) D-Bus
+fallback for compositors that do not implement the protocol.
+Any unsupported environment reports 0.0 (idle unknown).
 """
 from __future__ import annotations
 
 import ctypes
 import os
+
+from . import session as _session
 
 
 def _windows_idle_seconds() -> float:
@@ -33,14 +38,12 @@ def _windows_idle_seconds() -> float:
 
 
 def _x11_idle_seconds() -> float:
-    if os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11":
-        return 0.0
-
     if not os.environ.get("DISPLAY"):
         return 0.0
 
     display = None
     info = None
+    x11 = None
 
     try:
         class XScreenSaverInfo(ctypes.Structure):
@@ -110,9 +113,70 @@ def _x11_idle_seconds() -> float:
                 pass
 
 
+def _wayland_idle_seconds() -> float:
+    """Idle seconds on Wayland, falling back only when native support is absent."""
+    try:
+        from . import idle_wayland
+    except Exception:  # pragma: no cover - defensive import fallback
+        return 0.0
+
+    monitor = idle_wayland.monitor()
+    if not monitor.available or monitor.protocol_missing:
+        return _gnome_mutter_idle_seconds()
+
+    # A pending connection or a temporary compositor disconnect is not proof
+    # that Mutter is available. Avoid synchronous D-Bus calls on every poll.
+    return monitor.idle_seconds()
+
+
+def _gnome_mutter_idle_seconds() -> float:
+    """GNOME Shell fallback: Mutter's IdleMonitor D-Bus service.
+
+    Needs a running Qt application for the D-Bus connection (Daryafter polls
+    from the GUI thread), and silently reports 0.0 anywhere else.
+    """
+    try:
+        from PySide6.QtCore import QCoreApplication
+        from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage
+
+        if QCoreApplication.instance() is None:     # not from the GUI, or fake Qt in tests
+            return 0.0
+        bus = QDBusConnection.sessionBus()
+        if not bus.isConnected():
+            return 0.0
+
+        service = QDBusInterface(
+            "org.gnome.Mutter.IdleMonitor",
+            "/org/gnome/Mutter/IdleMonitor",
+            "org.gnome.Mutter.IdleMonitor",
+            bus,
+        )
+        if not service.isValid():
+            return 0.0
+
+        reply = service.call("GetIdletime")
+        if reply.type() != QDBusMessage.MessageType.ReplyMessage or not reply.arguments():
+            return 0.0
+
+        value = reply.arguments()[0]
+        for _ in range(3):                          # PySide6 may nest variant levels
+            if hasattr(value, "variant"):
+                value = value.variant()
+            else:
+                break
+        return max(int(value), 0) / 1000.0
+    except Exception:
+        return 0.0
+
+
 def system_idle_seconds() -> float:
     """Seconds since the last keyboard/mouse input, or 0.0 if unknown."""
     if os.name == "nt":
         return _windows_idle_seconds()
 
-    return _x11_idle_seconds()
+    kind = _session.session_type()
+    if kind == _session.WAYLAND:
+        return _wayland_idle_seconds()
+    if kind == _session.X11:
+        return _x11_idle_seconds()
+    return 0.0

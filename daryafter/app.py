@@ -140,6 +140,55 @@ def _app_icon():
     return QIcon(pix)
 
 
+def _platform_fallbacks() -> list[str]:
+    """Return alternative Qt platform plugins after Qt's default choice fails."""
+    if os.name != "posix" or os.environ.get("QT_QPA_PLATFORM"):
+        return []
+
+    from .core import session
+
+    kind = session.session_type()
+    if kind == session.WAYLAND:
+        return ["xcb"]
+    if kind == session.X11:
+        return ["wayland"]
+    return ["xcb", "wayland"]
+
+
+def _create_application():
+    """Create the QApplication, retrying with sensible platform plugins on Linux.
+
+    Qt normally picks the right platform by itself; this only matters when the
+    first choice fails (for example the Qt build has no Wayland plugin, or a
+    Wayland session's compositor refuses the connection), in which case falling
+    back on XWayland is friendslier than crashing.
+    """
+    from PySide6.QtWidgets import QApplication
+
+    fallbacks = _platform_fallbacks()
+
+    last_error = None
+    for platform in [None] + fallbacks:
+        if platform:
+            os.environ["QT_QPA_PLATFORM"] = platform
+        try:
+            app = QApplication(sys.argv[:1])
+            return app
+        except Exception as exc:                  # Qt raises SystemError on plugin failure
+            last_error = exc
+            if platform:
+                os.environ.pop("QT_QPA_PLATFORM", None)
+            print(f"Daryafter: Qt could not start with the {platform or 'default'} "
+                  f"platform plugin: {exc}", file=sys.stderr)
+
+    print("Daryafter needs a graphical session (an active display server) to show its "
+          "window. Links can still be downloaded with `daryafter-cli`.", file=sys.stderr)
+    if last_error:
+        raise SystemExit(
+            f"no usable Qt platform plugin: {last_error}")
+    raise SystemExit("no usable Qt platform plugin")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _args(sys.argv[1:] if argv is None else argv)
     if args.portable:
@@ -162,10 +211,17 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             pass
 
-    app = QApplication(sys.argv[:1])
+    app = _create_application()
     app.setApplicationName(APP_NAME)
     app.setOrganizationName(ORG_NAME)
     app.setWindowIcon(_app_icon())
+    if os.name == "posix":
+        # Associate our Wayland application_id (and X11 startup class) with the
+        # daryafter.desktop entry, so docks, taskbars and notifications know the icon.
+        try:
+            app.setDesktopFileName("daryafter")
+        except Exception:
+            pass
     if args.reset_lock:
         return _reset_lock(db_path)
 

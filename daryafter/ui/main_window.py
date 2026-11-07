@@ -29,6 +29,7 @@ from .detail import DetailPanel
 from .extras import SummaryDialog, Toast, Tray
 from .lock_screen import LockScreen
 from .models import FILTERS, SNAP_ROLE, DownloadsModel, FilterProxy, RowDelegate, matches_filter
+from .notifications import notify_desktop
 from .settings_dialog import SettingsDialog
 from .widgets import SAMPLES
 
@@ -346,19 +347,18 @@ class MainWindow(QMainWindow):
                 "disconnect": tr("Timer: disconnected (offline mode).")}.get(ev.text, "")
         if text:
             self.statusBar().showMessage(text, 20000)
-            if self.tray is not None:
-                self.tray.notify(APP_NAME, text)
+            self._notify(APP_NAME, text)
         if ev.flag:                                   # a "once" timer switched itself off: save that
             self.apply_new_settings(self.settings.copy())
 
     def _on_completed(self, snap: Snapshot) -> None:
         self.statusBar().showMessage(tr("Finished: {name}").format(name=snap.filename), 8000)
         QApplication.alert(self)
-        if self.settings.notify_on_complete and self.tray is not None:
-            if self.private or self.lock.locked:      # Windows keeps notifications in its history
-                self.tray.notify(tr("Download complete"), tr("A download has finished."))
+        if self.settings.notify_on_complete:
+            if self.private or self.lock.locked:
+                self._notify(tr("Download complete"), tr("A download has finished."))
             else:
-                self.tray.notify(tr("Download complete"), snap.filename)
+                self._notify(tr("Download complete"), snap.filename)
         if self.settings.show_summary and not self.lock.locked:
             self._summaries = self._open_summaries()
             dialog = SummaryDialog(snap, self)
@@ -552,6 +552,13 @@ class MainWindow(QMainWindow):
         self.lock_screen.refresh_icon()
 
     # ------------------------------------------------------------------ tray & clipboard
+    def _notify(self, title: str, text: str) -> None:
+        """Use the tray when present, otherwise the desktop notification service."""
+        if self.tray is not None:
+            self.tray.notify(title, text)
+        else:
+            notify_desktop(title, text, APP_NAME)
+
     def _setup_tray(self) -> None:
         want = self.settings.tray_enabled and QSystemTrayIcon.isSystemTrayAvailable()
         if want and self.tray is None:
@@ -566,6 +573,9 @@ class MainWindow(QMainWindow):
 
     def _show_window(self) -> None:
         self.showNormal()
+        handle = self.windowHandle()
+        if handle is not None:
+            handle.requestActivate()
         self.raise_()
         self.activateWindow()
 
@@ -631,7 +641,7 @@ class MainWindow(QMainWindow):
             self.hide()
             if not self._tray_hint_shown:
                 self._tray_hint_shown = True
-                self.tray.notify(APP_NAME, tr("Still running in the notification area."))
+                self._notify(APP_NAME, tr("Still running in the notification area."))
             return
         if not self._confirm_exit():
             self._quitting = False
