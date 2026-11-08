@@ -6,16 +6,21 @@ Thanks for helping! This is a small project, so keep changes focused and small.
 
 Open an [issue](https://github.com/RezaMarozi/daryafter/issues) with:
 
-- Windows version, Python version (`python --version`) and Daryafter version (More > About),
+- Operating system and version, Python version (`python --version`) and Daryafter version (More > About),
 - what you did, what you expected and what happened,
-- the error shown by `.venv\Scripts\python -m daryafter` in a Command Prompt, if there is one.
+- the error shown by `.venv\Scripts\python -m daryafter` on Windows or `.venv/bin/python -m daryafter` on Linux, if there is one.
 
-The log file is `%APPDATA%\Daryafter\daryafter.log`. **It may contain links you downloaded; remove anything
+The Windows log file is `%APPDATA%\Daryafter\daryafter.log`. **It may contain links you downloaded; remove anything
 private before posting it.**
+
+On Linux, include your distribution and desktop session (X11 or Wayland).
+To reproduce a startup error, run `.venv/bin/python -m daryafter` from
+the project directory. The default log location is
+`~/.local/share/daryafter/daryafter.log`.
 
 ## Running the tests
 
-    python -m unittest discover -s tests -t .
+    python -m pytest -q
     python -m tests.ui_smoke
 
 Please add or update a test for any change in `daryafter/core` (the engine has no Qt code and is easy to test).

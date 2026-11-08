@@ -46,7 +46,7 @@ class SettingsDialog(QDialog):
         form.addRow(tr("Default folder"), row)
         self.categorize = self._check(tr("Sort files into folders by type (Video, Music, ...)"), s.auto_categorize)
         self.ask_name = self._check(tr("Ask for the file name when a copied link is added"), s.ask_name_each_time)
-        self.prevent_sleep = self._check(tr("Keep Windows awake while downloading"), s.prevent_sleep)
+        self.prevent_sleep = self._check(tr("Prevent system sleep while downloading"), s.prevent_sleep)
         self.file_time = self._check(tr("Set the file date to the date on the server"), s.set_file_time)
         self.clipboard = self._check(tr("Offer to download links I copy"), s.clipboard_watch)
         self.notify = self._check(tr("Show a notification when a download finishes"), s.notify_on_complete)
@@ -69,7 +69,7 @@ class SettingsDialog(QDialog):
         self.retries = self._spin(-1, 100, s.retry_max)
         self.retries.setSpecialValueText(tr("Never give up"))
         self.proxy_mode = QComboBox()
-        for code, label in (("system", tr("Use the Windows setting")), ("none", tr("No proxy")),
+        for code, label in (("system", tr("Use system settings")), ("none", tr("No proxy")),
                             ("manual", tr("Manual"))):
             self.proxy_mode.addItem(label, code)
         self.proxy_mode.setCurrentIndex(max(0, self.proxy_mode.findData(s.proxy_mode)))
@@ -93,7 +93,7 @@ class SettingsDialog(QDialog):
         # ---- Appearance ----------------------------------------------------
         page, form = _page()
         self.theme = QComboBox()
-        for code, label in (("system", tr("Same as Windows")), ("light", tr("Light")), ("dark", tr("Dark"))):
+        for code, label in (("system", tr("System default")), ("light", tr("Light")), ("dark", tr("Dark"))):
             self.theme.addItem(label, code)
         self.theme.setCurrentIndex(max(0, self.theme.findData(s.theme)))
         self.language = QComboBox()
@@ -120,11 +120,11 @@ class SettingsDialog(QDialog):
             form.addRow("", note)
         self.private = self._check(tr("Start in private mode (nothing is saved on this computer)"), s.start_private)
         self.clear_exit = self._check(tr("Clear the finished downloads list when I exit"), s.clear_history_on_exit)
-        self.remember = self._check(tr("Remember passwords (encrypted for this Windows user)"), s.remember_passwords)
+        self.remember = self._check(tr("Remember passwords (protected for this user)"), s.remember_passwords)
         for box in (self.private, self.clear_exit, self.remember):
             form.addRow("", box)
         hint = QLabel(tr('To switch "Start in private mode" off again, start Daryafter with '
-                         '"run.bat --normal" and untick it here.'))
+                         '"run.bat --normal" on Windows or "./run.sh --normal" on Linux and untick it here.'))
         hint.setProperty("muted", True)
         hint.setWordWrap(True)
         form.addRow("", hint)

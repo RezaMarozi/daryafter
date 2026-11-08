@@ -40,7 +40,7 @@ class NetworkConfig:
 
 
 def _tls_context():
-    """Prefer the Windows certificate store (works behind antivirus/corporate TLS inspection)."""
+    """Prefer the platform certificate store when truststore is available."""
     try:
         import truststore
 

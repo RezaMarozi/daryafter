@@ -1,5 +1,7 @@
-"""Light/dark theme that follows the Windows setting (or a fixed choice)."""
+"""Light/dark theme that follows the system setting (or a fixed choice)."""
 from __future__ import annotations
+
+import os
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QPalette
@@ -19,15 +21,68 @@ def colors() -> dict[str, str]:
     return _current
 
 
+def _portal_color_scheme() -> bool | None:
+    """Read the system color scheme from the XDG desktop portal."""
+    try:
+        from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage
+        bus = QDBusConnection.sessionBus()
+        if not bus.isConnected():
+            return None
+
+        portal = QDBusInterface(
+            "org.freedesktop.portal.Desktop",
+            "/org/freedesktop/portal/desktop",
+            "org.freedesktop.portal.Settings",
+            bus,
+        )
+        if not portal.isValid():
+            return None
+
+        reply = portal.call(
+            "Read",
+            "org.freedesktop.appearance",
+            "color-scheme",
+        )
+
+        if reply.type() != QDBusMessage.MessageType.ReplyMessage:
+            return None
+
+        value = reply.arguments()[0]
+
+        # PySide6 may expose the portal's variant with nested wrappers.
+        for _ in range(3):
+            if hasattr(value, "variant"):
+                value = value.variant()
+            else:
+                break
+
+        if value == 1:
+            return True
+        if value == 2:
+            return False
+
+    except Exception:
+        pass
+
+    return None
+
+
 def is_dark(mode: str) -> bool:
     if mode == "dark":
         return True
     if mode == "light":
         return False
+
     try:
-        return QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        scheme = QGuiApplication.styleHints().colorScheme()
+        if scheme == Qt.ColorScheme.Dark:
+            return True
+        if scheme == Qt.ColorScheme.Light:
+            return False
     except Exception:
-        return False
+        pass
+
+    return _portal_color_scheme() is True
 
 
 def _stylesheet(c: dict[str, str]) -> str:
@@ -75,6 +130,21 @@ QSplitter::handle {{ background: {c['border']}; }}
 """
 
 
+def _ui_font(app: QApplication) -> QFont:
+    """The platform's own UI font (Segoe UI on Windows, Noto Sans/Ubuntu/... on Linux)."""
+    if os.name == "nt":
+        return QFont("Segoe UI", 10)
+    try:
+        from PySide6.QtGui import QFontDatabase
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont)
+        if font.pointSize() <= 0:
+            font.setPointSize(10)
+        font.setPointSize(max(9, min(font.pointSize(), 12)))
+        return font
+    except Exception:
+        return QFont("Noto Sans", 10)
+
+
 def apply_theme(app: QApplication, mode: str = "system") -> None:
     global _current
     try:                                   # Qt 6.8+: follow the system again, or force light/dark
@@ -96,5 +166,5 @@ def apply_theme(app: QApplication, mode: str = "system") -> None:
                       (QPalette.ColorRole.PlaceholderText, "muted")):
         pal.setColor(role, QColor(c[key]))
     app.setPalette(pal)
-    app.setFont(QFont("Segoe UI", 10))
+    app.setFont(_ui_font(app))
     app.setStyleSheet(_stylesheet(c))

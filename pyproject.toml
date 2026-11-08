@@ -1,20 +1,21 @@
 [project]
 name = "daryafter"
-version = "0.1.0"
-description = "Free, open-source multi-connection download manager for Windows"
+version = "0.1.1"
+description = "Free, open-source multi-connection download manager"
 readme = "README.md"
 authors = [{ name = "Reza Marozi" }]
-keywords = ["download-manager", "downloader", "pyside6", "windows", "resume"]
+keywords = ["download-manager", "downloader", "pyside6", "linux", "windows", "resume"]
 classifiers = [
-"Development Status :: 4 - Beta",
-"Operating System :: Microsoft :: Windows",
-"Programming Language :: Python :: 3.12",
-"Programming Language :: Python :: 3.13",
-"Programming Language :: Python :: 3.14",
-"Topic :: Internet :: WWW/HTTP",
+    "Development Status :: 4 - Beta",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
 ]
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = "MIT"
 dependencies = ["httpx[http2,socks]>=0.27", "truststore>=0.9", "PySide6>=6.6"]
 
 [project.urls]
@@ -26,7 +27,7 @@ daryafter = "daryafter.app:main"
 daryafter-cli = "daryafter.cli:main"
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
