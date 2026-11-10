@@ -1,7 +1,7 @@
 pkgbase = daryafter
 	pkgdesc = Free, open-source multi-connection download manager
 	pkgver = 0.1.1
-	pkgrel = 2
+	pkgrel = 1
 	url = https://github.com/RezaMarozi/daryafter
 	arch = any
 	license = MIT
@@ -16,7 +16,7 @@ pkgbase = daryafter
 	depends = python-socksio
 	depends = python-truststore
 	optdepends = libnotify: desktop notification fallback via notify-send
-	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/6cafe3361c228327cc47e9e840b55438fa56145b/daryafter-0.1.1.tar.gz
-	sha256sums = 0a54ec93366962002a6deb425d9c7d07966c2663f053a1b46325b0d53f4ef0db
+	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/23ce17690ee7c4e0db40f9050766997e3264808d/daryafter-0.1.1.tar.gz
+	sha256sums = fa284cb96cadddf19b5b1a2e3d1f317c70eb28f03f821e3d6bdbb812d1e067c8
 
 pkgname = daryafter

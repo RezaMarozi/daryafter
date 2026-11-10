@@ -8,7 +8,7 @@
 
 pkgname=daryafter
 pkgver=0.1.1
-pkgrel=2
+pkgrel=1
 pkgdesc="Free, open-source multi-connection download manager"
 arch=('any')
 url="https://github.com/RezaMarozi/daryafter"
@@ -30,9 +30,9 @@ makedepends=(
     'python-installer'
     'python-setuptools'
 )
-_commit=6cafe3361c228327cc47e9e840b55438fa56145b
+_commit=23ce17690ee7c4e0db40f9050766997e3264808d
 source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit/$pkgname-$pkgver.tar.gz")
-sha256sums=('0a54ec93366962002a6deb425d9c7d07966c2663f053a1b46325b0d53f4ef0db')
+sha256sums=('fa284cb96cadddf19b5b1a2e3d1f317c70eb28f03f821e3d6bdbb812d1e067c8')
 
 build() {
     cd "$srcdir/$pkgname-$_commit"
