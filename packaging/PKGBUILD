@@ -1,4 +1,5 @@
 # Daryafter - free, open-source multi-connection download manager.
+# Maintainer: AMIRKATE <amirkateb36@gmail.com>
 # Upstream: https://github.com/RezaMarozi/daryafter
 #
 # The source is pinned to the commit that carries version 0.1.1 (the v0.1.1
@@ -21,6 +22,7 @@ depends=(
     'python-h2'
     'python-socksio'
     'python-truststore'
+    'hicolor-icon-theme'
 )
 optdepends=(
     'libnotify: desktop notification fallback via notify-send'

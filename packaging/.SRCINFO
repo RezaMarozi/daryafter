@@ -15,6 +15,7 @@ pkgbase = daryafter
 	depends = python-h2
 	depends = python-socksio
 	depends = python-truststore
+	depends = hicolor-icon-theme
 	optdepends = libnotify: desktop notification fallback via notify-send
 	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/23ce17690ee7c4e0db40f9050766997e3264808d/daryafter-0.1.1.tar.gz
 	sha256sums = fa284cb96cadddf19b5b1a2e3d1f317c70eb28f03f821e3d6bdbb812d1e067c8
