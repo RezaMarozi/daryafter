@@ -21,9 +21,17 @@ Before the Linux port, Windows testing was limited: the GUI was only smoke-teste
 - [x] System sleep inhibition while downloads are active
 - [x] X11 idle-time detection
 - [x] System theme detection through the desktop portal
-- [x] Manually launched and tested on Arch Linux with Python 3.14.9
-- [x] Test suite: 66 passed
+- [x] Native Wayland session support (session-type detection that mirrors Qt, an automatic
+      `xcb` fallback when the Wayland plugin fails, `daryafter` window identity, portal-based
+      theme detection) and Wayland idle-time detection: the standard `ext-idle-notify-v1`
+      protocol over `libwayland-client`, with a Mutter `IdleMonitor` D-Bus fallback for
+      compositors without the protocol (the interface lives on the
+      `/org/gnome/Mutter/IdleMonitor/Core` child object; verified live against mutter 51.1)
+- [x] Manually launched and tested on Arch Linux with Python 3.14.9 under Hyprland; the Mutter
+      fallback was exercised in-process against a real, headless GNOME Shell on a private
+      D-Bus session (no system or desktop changes)
+- [x] Test suite: 101 passed (`python -m pytest -q`), plus `python -m tests.ui_smoke`
 
-Wayland idle-time detection is not currently supported. Windows still needs retesting after the Linux changes.
+Windows still needs retesting after the Linux changes.
 
 The project has also had Linux-side development and test runs. See the relevant pull request and its test notes for Linux-specific coverage.
