@@ -33,7 +33,9 @@ notification request; version 1 is also supported.
 
 If the compositor does not advertise this protocol, Daryafter tries Mutter's
 `org.gnome.Mutter.IdleMonitor.GetIdletime` D-Bus API. This provides a fallback
-for GNOME/Mutter sessions. Other compositors without `ext-idle-notify-v1` or
+for GNOME/Mutter sessions (the interface lives on the
+`/org/gnome/Mutter/IdleMonitor/Core` child object; verified live against
+mutter 51.1). Other compositors without `ext-idle-notify-v1` or
 a compatible Mutter service cannot provide automatic inactivity detection.
 
 Daryafter never falls back to X11 idle time on a Wayland session: under

@@ -14,6 +14,13 @@ from unittest import mock
 
 from daryafter.core import idle, idle_wayland, session
 
+try:
+    import PySide6  # noqa: F401
+except ImportError:
+    _has_pyside = False
+else:
+    _has_pyside = True
+
 
 class SessionTypeTests(unittest.TestCase):
     def test_windows(self):
@@ -133,6 +140,98 @@ class FacadeDispatchTests(unittest.TestCase):
             self.skipTest("PySide6 is not installed")
         # Without a running Qt application the mutter query must be a no-op.
         self.assertEqual(idle._gnome_mutter_idle_seconds(), 0.0)
+
+
+@unittest.skipUnless(_has_pyside, "PySide6 is not installed")
+class MutterFallbackPathTests(unittest.TestCase):
+    """The real org.gnome.Mutter.IdleMonitor interface lives on the ``/Core``
+    child object in every Mutter that ships it (3.16 through 51; verified
+    live against mutter 51.1, where the parent path has no such interface).
+
+    These tests pin the query path order and the integer-value handling with
+    a fake QtDBus, so a path regression fails loudly instead of silently
+    returning 0.0 (which would turn the app's auto-lock into a no-op).
+    """
+
+    CORE_PATH = "/org/gnome/Mutter/IdleMonitor/Core"
+    PARENT_PATH = "/org/gnome/Mutter/IdleMonitor"
+    REPLY = object()                    # MessageType.ReplyMessage stand-in
+    ERROR = object()                    # MessageType.ErrorMessage stand-in
+
+    def _fake_qt(self, discovered, core_type=REPLY, core_ms=5880,
+                 parent_type=REPLY, parent_ms=1001):
+        """Fake PySide6.QtCore/QtDBus; every queried path is appended to ``discovered``."""
+        import types
+
+        core = types.ModuleType("PySide6.QtCore")
+        core.QCoreApplication = types.SimpleNamespace(instance=lambda: object())
+
+        def reply(message_type, ms):
+            r = mock.Mock()
+            r.type = mock.Mock(return_value=message_type)
+            r.arguments = mock.Mock(return_value=(ms,))
+            return r
+
+        def interface(service, path, iface_name, _bus):
+            discovered.append(path)
+            if path == self.CORE_PATH:
+                kind, ms = core_type, core_ms
+            else:
+                kind, ms = parent_type, parent_ms
+            iface = mock.Mock()
+            iface.call = mock.Mock(return_value=reply(kind, ms))
+            return iface
+
+        bus = mock.Mock()
+        bus.isConnected = mock.Mock(return_value=True)
+
+        dbus = types.ModuleType("PySide6.QtDBus")
+        dbus.QDBusConnection = types.SimpleNamespace(sessionBus=lambda: bus)
+        dbus.QDBusInterface = interface
+        dbus.QDBusMessage = types.SimpleNamespace(
+            MessageType=types.SimpleNamespace(ReplyMessage=self.REPLY,
+                                              ErrorMessage=self.ERROR))
+        return core, dbus
+
+    def _call_with_fake(self, core, dbus):
+        with mock.patch.dict("sys.modules", {"PySide6.QtCore": core,
+                                             "PySide6.QtDBus": dbus}):
+            return idle._gnome_mutter_idle_seconds()
+
+    def test_queries_the_core_child_object(self):
+        # happy path: the /Core object answers, so the parent is never touched
+        discovered = []
+        core, dbus = self._fake_qt(discovered, core_ms=5880)
+        self.assertEqual(self._call_with_fake(core, dbus), 5880 / 1000.0)
+        self.assertEqual(discovered, [self.CORE_PATH])
+
+    def test_falls_back_to_the_parent_path(self):
+        # /Core reports an error (no such interface) -> retry the parent object
+        discovered = []
+        core, dbus = self._fake_qt(discovered,
+                                   core_type=self.ERROR, core_ms=0,
+                                   parent_type=self.REPLY, parent_ms=1001)
+        self.assertEqual(self._call_with_fake(core, dbus), 1001 / 1000.0)
+        self.assertIn(self.CORE_PATH, discovered)
+        self.assertIn(self.PARENT_PATH, discovered)
+
+    def test_unwraps_variant_levels(self):
+        discovered = []
+
+        class _Variant:
+            def variant(self):
+                return 7_125
+
+        core, dbus = self._fake_qt(discovered, core_ms=_Variant())
+        self.assertEqual(self._call_with_fake(core, dbus), 7.125)
+
+    def test_no_interface_anywhere_reports_zero(self):
+        discovered = []
+        core, dbus = self._fake_qt(discovered,
+                                   core_type=self.ERROR, core_ms=0,
+                                   parent_type=self.ERROR, parent_ms=0)
+        self.assertEqual(self._call_with_fake(core, dbus), 0.0)
+        self.assertEqual(discovered, [self.CORE_PATH, self.PARENT_PATH])
 
 
 @unittest.skipUnless(idle_wayland.client_lib() is not None, "libwayland-client not found")

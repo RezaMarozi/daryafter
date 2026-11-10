@@ -4,6 +4,14 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- The GNOME Shell idle fallback queried mutter's
+  `org.gnome.Mutter.IdleMonitor` D-Bus service on the wrong object path
+  (`/org/gnome/Mutter/IdleMonitor`); the interface only exists on the
+  `.../IdleMonitor/Core` child object in every Mutter that ships it, so the
+  fallback always resolved to "idle unknown" and the auto-lock never armed
+  on GNOME desktops. Verified live against mutter 51.1.
+
 ### Added
 - Native Wayland session support:
   - Idle-time detection now works on Wayland compositors (used by the app-lock

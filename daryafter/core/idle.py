@@ -134,6 +134,11 @@ def _gnome_mutter_idle_seconds() -> float:
 
     Needs a running Qt application for the D-Bus connection (Daryafter polls
     from the GUI thread), and silently reports 0.0 anywhere else.
+
+    The interface lives on the ``/Core`` child object (``/org/gnome/Mutter/
+    IdleMonitor/Core``) in every Mutter that ships this service (3.16 through
+    51, verified live against mutter 51.1); the parent path never exports the
+    interface and is only tried as a last-resort candidate.
     """
     try:
         from PySide6.QtCore import QCoreApplication
@@ -145,28 +150,28 @@ def _gnome_mutter_idle_seconds() -> float:
         if not bus.isConnected():
             return 0.0
 
-        service = QDBusInterface(
-            "org.gnome.Mutter.IdleMonitor",
-            "/org/gnome/Mutter/IdleMonitor",
-            "org.gnome.Mutter.IdleMonitor",
-            bus,
-        )
-        if not service.isValid():
-            return 0.0
+        for path in ("/org/gnome/Mutter/IdleMonitor/Core",   # the real object
+                     "/org/gnome/Mutter/IdleMonitor"):       # defensive: exotic setups
+            iface = QDBusInterface("org.gnome.Mutter.IdleMonitor", path,
+                                   "org.gnome.Mutter.IdleMonitor", bus)
+            if not iface.isValid():
+                continue
 
-        reply = service.call("GetIdletime")
-        if reply.type() != QDBusMessage.MessageType.ReplyMessage or not reply.arguments():
-            return 0.0
+            reply = iface.call("GetIdletime")
+            if reply.type() != QDBusMessage.MessageType.ReplyMessage or not reply.arguments():
+                continue                       # e.g. unknown interface: try the next path
 
-        value = reply.arguments()[0]
-        for _ in range(3):                          # PySide6 may nest variant levels
-            if hasattr(value, "variant"):
-                value = value.variant()
-            else:
-                break
-        return max(int(value), 0) / 1000.0
+            value = reply.arguments()[0]
+            for _ in range(3):                          # PySide6 may nest variant levels
+                if hasattr(value, "variant"):
+                    value = value.variant()
+                else:
+                    break
+            return max(int(value), 0) / 1000.0
     except Exception:
         return 0.0
+    return 0.0
+
 
 
 def system_idle_seconds() -> float:
