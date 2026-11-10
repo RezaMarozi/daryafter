@@ -1,3 +1,11 @@
+# Daryafter - free, open-source multi-connection download manager.
+# Upstream: https://github.com/RezaMarozi/daryafter
+#
+# The source is pinned to the commit that carries version 0.1.1 (the v0.1.1
+# tag does not exist upstream yet). Once the tag is pushed, switch back to:
+#   source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+# and update sha256sums (a tag tarball extracts as "$pkgname-$pkgver").
+
 pkgname=daryafter
 pkgver=0.1.1
 pkgrel=2
@@ -22,16 +30,17 @@ makedepends=(
     'python-installer'
     'python-setuptools'
 )
-source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+_commit=6cafe3361c228327cc47e9e840b55438fa56145b
+source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit/$pkgname-$pkgver.tar.gz")
+sha256sums=('0a54ec93366962002a6deb425d9c7d07966c2663f053a1b46325b0d53f4ef0db')
 
 build() {
-    cd "$srcdir/$pkgname-$pkgver"
+    cd "$srcdir/$pkgname-$_commit"
     /usr/bin/python -m build --wheel --no-isolation
 }
 
 package() {
-    cd "$srcdir/$pkgname-$pkgver"
+    cd "$srcdir/$pkgname-$_commit"
 
     /usr/bin/python -m installer --destdir="$pkgdir" dist/*.whl
     find "$pkgdir" -type d -name __pycache__ -prune -exec rm -rf {} +

@@ -16,7 +16,7 @@ pkgbase = daryafter
 	depends = python-socksio
 	depends = python-truststore
 	optdepends = libnotify: desktop notification fallback via notify-send
-	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/refs/tags/v0.1.1.tar.gz
-	sha256sums = SKIP
+	source = daryafter-0.1.1.tar.gz::https://github.com/RezaMarozi/daryafter/archive/6cafe3361c228327cc47e9e840b55438fa56145b/daryafter-0.1.1.tar.gz
+	sha256sums = 0a54ec93366962002a6deb425d9c7d07966c2663f053a1b46325b0d53f4ef0db
 
 pkgname = daryafter
