@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font: 13px sans-serif; min-width: 260px; margin: 12px; color: #222; }
+    h1 { font-size: 14px; margin: 0 0 10px; }
+    .status { margin-bottom: 10px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+           background: #999; vertical-align: middle; }
+    .ok .dot { background: #0B7F99; } .bad .dot { background: #B03030; }
+    #start-btn { margin-bottom: 8px; }
+    label { display: block; margin: 8px 0; }
+    footer { margin-top: 12px; font-size: 12px; }
+    a { color: #0B7F99; }
+  </style>
+</head>
+<body>
+  <h1>Daryafter</h1>
+  <div class="status" id="status"><span class="dot"></span><span id="status-text">Checking...</span></div>
+  <button id="start-btn" hidden>Start Daryafter</button>
+  <label><input type="checkbox" id="auto"> Auto-download clicked download links</label>
+  <footer>
+    <a href="options.html" id="options-link" target="_blank">Options</a><br>
+    Daryafter must be running for downloads to work.
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>

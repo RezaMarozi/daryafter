@@ -160,7 +160,10 @@ both it and a compatible desktop notification daemon are available.
 ## Browser extension
 
 A WebExtension for **Firefox** and **Chrome/Chromium/Edge/Brave** ships in the
-[`extension/`](extension/) folder of this project (version 0.1.0, beta).
+[`extension/`](extension/) folder of this project (version 0.1.0, beta). The folder holds the
+Firefox manifest at its root (`extension/manifest.json`) and the Chrome manifest inside
+[`extension/chrome/`](extension/chrome/); the two browsers need different manifest shapes, and
+`tests/test_extension_files.py` keeps the shared files identical in both places.
 
 What it does:
 
@@ -191,7 +194,8 @@ host:
 
 1. Start Daryafter.
 2. Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on...**
-3. Pick `extension/manifest.firefox.json` (any file in that folder works).
+3. Pick `extension/manifest.json` — or **any** file inside the `extension/` folder; the Firefox
+   manifest sits at the folder root, so any pick works.
 4. If auto-download does nothing, open `about:addons` > the Daryafter extension >
    **Permissions** and make sure *"Access your data for all websites"* is enabled.
    Temporary add-ons are removed when Firefox closes; load them again next time.
@@ -200,7 +204,7 @@ host:
 
 1. Start Daryafter.
 2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**.
-3. Pick the `extension/` folder (the plain `manifest.json` is used).
+3. Pick the `extension/chrome/` folder (Chrome's manifest is at its root).
 
 Once the extension is signed and published, installation will be a one-click store link.
 

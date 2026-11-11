@@ -25,10 +25,14 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
     is a web page, so hostile sites cannot forge requests; switch it off in Settings >
     General. Extension-provided file names are honoured; the add dialog still appears when
     "Ask for the file name" is on.
-  - **auto-start**: when the bridge is unreachable, the extension starts Daryafter through a
+- **auto-start**: when the bridge is unreachable, the extension starts Daryafter through a
     native messaging host (`extension/native-host/`; installed system-wide by the package for
     Firefox, `install.sh` for Chrome/Chromium), and the pop-up offers a Start button.
     Covered by 13 tests in `tests/test_native_host.py`.
+  - Folder layout: the Firefox manifest is `extension/manifest.json` (so any file picked in
+    "Load Temporary Add-on" resolves to it) and the Chrome manifest lives in
+    `extension/chrome/manifest.json` ("Load unpacked" needs it at a folder root);
+    `tests/test_extension_files.py` keeps the shared copies identical (suite: 134 passed).
   - Covered by 14 new tests in `tests/test_browser_server.py` (suite: 128 passed) and verified
     live: ping OK, refused web origin, accepted extension request, clicked-download
     interception, normal-link pass-through, and a real auto-start (app down -> click ->

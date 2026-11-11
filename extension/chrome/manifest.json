@@ -10,15 +10,6 @@
     "96": "icons/icon96.png",
     "128": "icons/icon128.png"
   },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "daryafter@daryafter.local",
-      "strict_min_version": "128.0"
-    }
-  },
-  "data_collection_permissions": {
-    "required": ["none"]
-  },
   "permissions": [
     "contextMenus",
     "storage",
@@ -30,7 +21,7 @@
     "http://localhost/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
