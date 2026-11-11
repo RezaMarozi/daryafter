@@ -31,6 +31,14 @@ Before the Linux port, Windows testing was limited: the GUI was only smoke-teste
       fallback was exercised in-process against a real, headless GNOME Shell on a private
       D-Bus session (no system or desktop changes)
 - [x] Test suite: 101 passed (`python -m pytest -q`), plus `python -m tests.ui_smoke`
+- [x] Browser extension (beta): `extension/` holds a Firefox + Chrome/Chromium WebExtension
+      with a right-click "Download with Daryafter" menu entry and an optional auto-download
+      mode that hands every clicked download link to Daryafter. It talks to a small localhost
+      bridge in the app (`core/browser_server.py`, port 27240, loopback only, custom-header +
+      Origin checks so web pages cannot forge requests; toggle in Settings > General).
+      Bridge covered by `tests/test_browser_server.py` (14 tests); extension verified with the
+      live app (ping / refused web origin / accepted extension request). Manual in-browser
+      testing (about:debugging temporary add-on, chrome://extensions load unpacked) still to do.
 
 Windows still needs retesting after the Linux changes.
 

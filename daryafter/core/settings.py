@@ -41,6 +41,7 @@ class Settings:
     theme: str = "system"                  # system | light | dark
     language: str = "en"
     clipboard_watch: bool = True
+    browser_integration: bool = True        # run the localhost bridge for the browser extension
     notify_on_complete: bool = True
     show_summary: bool = True
     tray_enabled: bool = True

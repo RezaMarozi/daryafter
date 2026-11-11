@@ -13,6 +13,19 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
   on GNOME desktops. Verified live against mutter 51.1.
 
 ### Added
+- **Browser extension (beta)** for Firefox and Chrome/Chromium/Edge/Brave, shipped in
+  `extension/`:
+  - a right-click **"Download with Daryafter"** context-menu entry for links, images, videos
+    and audio;
+  - an optional **auto-download** mode that hands every clicked download link to Daryafter
+    instead of the browser (`<a download>` links plus a configurable list of file types;
+    PDF excluded by default);
+  - communication over a small localhost bridge inside the app (`core/browser_server.py`,
+    port 27240): loopback only, requires a custom header and refuses requests whose origin
+    is a web page, so hostile sites cannot forge requests; switch it off in Settings >
+    General. Extension-provided file names are honoured; the add dialog still appears when
+    "Ask for the file name" is on. Covered by 14 new tests in `tests/test_browser_server.py`
+    (suite: 115 passed) and verified against the running app.
 - Native Wayland session support:
   - Idle-time detection now works on Wayland compositors (used by the app-lock
     auto-lock timer). It uses the `ext-idle-notify-v1` compositor protocol

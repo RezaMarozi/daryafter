@@ -1,2 +1,4 @@
 include packaging/daryafter.desktop
 include packaging/daryafter.svg
+# the browser extension (Firefox + Chrome) ships inside the source distribution
+graft extension

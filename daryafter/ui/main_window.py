@@ -7,7 +7,7 @@ from collections import deque
 from dataclasses import fields
 from urllib.parse import urlsplit
 
-from PySide6.QtCore import QByteArray, QEvent, Qt, QTimer, QUrl
+from PySide6.QtCore import QByteArray, QEvent, QObject, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDialog, QHBoxLayout, QHeaderView,
                                QInputDialog, QLabel, QLineEdit, QListWidget, QMainWindow, QMenu,
@@ -16,10 +16,12 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
 
 from ..branding import APP_NAME, AUTHOR_NAME, LICENSE_NAME, REPO_URL, VERSION
 from ..core.applock import LockController
+from ..core.browser_server import BrowserServer
 from ..core.categories import looks_downloadable
+from ..core.filenames import sanitize_filename
 from ..core.fmt import human_speed
 from ..core.idle import system_idle_seconds
-from ..core.models import RUNNING_STATES, Event, Snapshot, State
+from ..core.models import RUNNING_STATES, AddRequest, DownloadOptions, Event, Snapshot, State
 from ..core.settings import Settings
 from ..errors_text import friendly
 from ..i18n import tr
@@ -32,6 +34,11 @@ from .models import FILTERS, SNAP_ROLE, DownloadsModel, FilterProxy, RowDelegate
 from .notifications import notify_desktop
 from .settings_dialog import SettingsDialog
 from .widgets import SAMPLES
+
+
+class _BrowserRelay(QObject):
+    """Hops link requests from the browser-bridge thread onto the Qt thread."""
+    add = Signal(str, str, str)               # url, referrer, filename
 
 
 class MainWindow(QMainWindow):
@@ -72,6 +79,10 @@ class MainWindow(QMainWindow):
         self.model.set_all(service.snapshots())
         self._refresh()
         self._setup_tray()
+        self._browser_server: BrowserServer | None = None
+        self._browser_relay = _BrowserRelay()
+        self._browser_relay.add.connect(self._browser_add)
+        self._setup_browser_server()
         QGuiApplication.clipboard().dataChanged.connect(self._clipboard_changed)
         try:
             QGuiApplication.styleHints().colorSchemeChanged.connect(lambda *_: self._system_theme_changed())
@@ -536,7 +547,35 @@ class MainWindow(QMainWindow):
         if self.settings.theme != old_theme:
             self._retheme()
         self._setup_tray()
+        self._setup_browser_server()
         self.act_lock.setEnabled(self.settings.lock_enabled)
+
+    # ------------------------------------------------------------------ browser extension
+    def _setup_browser_server(self) -> None:
+        """Run (or stop) the little localhost bridge that the browser extension talks to."""
+        if self.settings.browser_integration:
+            if self._browser_server is None:
+                server = BrowserServer(self._browser_relay.add.emit)
+                if server.start():
+                    self._browser_server = server
+        elif self._browser_server is not None:
+            self._browser_server.stop()
+            self._browser_server = None
+
+    def _browser_add(self, url: str, referrer: str, filename: str) -> None:      # GUI thread
+        """A link arrived from the browser extension."""
+        url = (url or "").strip()
+        if not url:
+            return
+        filename = sanitize_filename(filename)
+        if filename and not self.settings.ask_name_each_time:
+            # automatic add (auto-download mode): no name dialog
+            request = AddRequest(url=url, filename=filename,
+                                 use_category_folder=self.settings.auto_categorize,
+                                 options=DownloadOptions(referer=referrer))
+            self.service.add(request).add_done_callback(self._report_failure)
+            return
+        self.add_download(url)                      # shows the name dialog (waits while locked)
 
     def _system_theme_changed(self) -> None:
         if self.settings.theme == "system":

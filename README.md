@@ -157,6 +157,43 @@ both it and a compatible desktop notification daemon are available.
 - **Queue**: waiting downloads show their place ("Queued #2"). Right-click a download to move it to the top,
   up, down or to the bottom.
 
+## Browser extension
+
+A WebExtension for **Firefox** and **Chrome/Chromium/Edge/Brave** ships in the
+[`extension/`](extension/) folder of this project (version 0.1.0, beta).
+
+What it does:
+
+- **Right-click any link** (also images, videos and audio) and choose **Download with Daryafter**.
+- **Auto-download** (off by default, enable it in the extension's pop-up or options page):
+  every click on a download link — `<a download>` links or links ending in a file type from the
+  list (zip, exe, iso, mp4, ...) — is handed to Daryafter instead of downloading in the browser.
+  Ordinary navigation is never touched, and PDF is excluded by default so you can still read
+  PDFs in the browser.
+
+Requirements: **Daryafter must be running** (it can sit in the tray). The extension talks to a
+small local bridge inside the app on `http://127.0.0.1:27240` — loopback only, and requests are
+rejected unless they carry a custom header that web pages cannot send, so websites cannot abuse
+the bridge. You can switch the bridge off in Daryafter under **Settings > General > "Accept
+downloads from the Daryafter browser extension"**.
+
+### Install in Firefox (temporary, for testing)
+
+1. Start Daryafter.
+2. Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on...**
+3. Pick `extension/manifest.firefox.json` (any file in that folder works).
+4. If auto-download does nothing, open `about:addons` > the Daryafter extension >
+   **Permissions** and make sure *"Access your data for all websites"* is enabled.
+   Temporary add-ons are removed when Firefox closes; load them again next time.
+
+### Install in Chrome/Chromium/Edge/Brave
+
+1. Start Daryafter.
+2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**.
+3. Pick the `extension/` folder (the plain `manifest.json` is used).
+
+Once the extension is signed and published, installation will be a one-click store link.
+
 ## Command line
 
     run_cli.bat "https://example.com/big.zip" -o D:\Downloads -c 16
@@ -198,7 +235,9 @@ Plans, with **no dates and no promises**:
 
 - **Next:** a Windows installer / `.exe` (so Python is not needed); testing and officially supporting
   Python 3.13 and 3.14.
-- **Planned:** more interface languages; a browser extension; a check for new versions.
+- **Planned:** more interface languages; publishing the browser extension to the add-on stores
+  (the extension itself already works — see [Browser extension](#browser-extension)); a check for
+  new versions.
 - **Under consideration:** downloading from Instagram and Telegram. This depends on technical
   feasibility and on those services' terms, so it may not happen.
 

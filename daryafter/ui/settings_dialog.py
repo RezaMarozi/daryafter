@@ -49,12 +49,14 @@ class SettingsDialog(QDialog):
         self.prevent_sleep = self._check(tr("Prevent system sleep while downloading"), s.prevent_sleep)
         self.file_time = self._check(tr("Set the file date to the date on the server"), s.set_file_time)
         self.clipboard = self._check(tr("Offer to download links I copy"), s.clipboard_watch)
+        self.browser = self._check(tr("Accept downloads from the Daryafter browser extension"),
+                                   s.browser_integration)
         self.notify = self._check(tr("Show a notification when a download finishes"), s.notify_on_complete)
         self.summary = self._check(tr("Show a speed summary when a download finishes"), s.show_summary)
         self.tray = self._check(tr("Show an icon in the notification area"), s.tray_enabled)
         self.to_tray = self._check(tr("Closing the window keeps the app running in the tray"), s.minimize_to_tray)
         for box in (self.categorize, self.ask_name, self.prevent_sleep, self.file_time, self.clipboard,
-                    self.notify, self.summary, self.tray, self.to_tray):
+                    self.browser, self.notify, self.summary, self.tray, self.to_tray):
             form.addRow("", box)
         tabs.addTab(page, tr("General"))
 
@@ -298,6 +300,7 @@ class SettingsDialog(QDialog):
         s.prevent_sleep = self.prevent_sleep.isChecked()
         s.set_file_time = self.file_time.isChecked()
         s.clipboard_watch = self.clipboard.isChecked()
+        s.browser_integration = self.browser.isChecked()
         s.notify_on_complete = self.notify.isChecked()
         s.show_summary = self.summary.isChecked()
         s.tray_enabled = self.tray.isChecked()

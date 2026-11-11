@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Daryafter extension options</title>
+  <style>
+    body { font: 14px sans-serif; max-width: 640px; margin: 24px auto; color: #222; }
+    h1 { font-size: 18px; }
+    section { margin-bottom: 18px; }
+    textarea { width: 100%; min-height: 120px; font: 13px monospace; }
+    .muted { color: #777; font-size: 13px; }
+    .status { margin: 10px 0; }
+    .ok { color: #0B7F99; } .bad { color: #B03030; }
+    button { margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Daryafter extension</h1>
+
+  <section>
+    <label><input type="checkbox" id="auto"> Auto-download clicked download links</label>
+    <p class="muted">When on, clicking a link that points to a file type below (or any
+    &lt;a download&gt; link) sends it to Daryafter instead of downloading it in the browser.
+    For fully automatic downloads, also untick "Ask for the file name when a copied link
+    is added" in Daryafter's Settings.</p>
+  </section>
+
+  <section>
+    <label for="extensions">File types to auto-download (one per line):</label>
+    <textarea id="extensions" spellcheck="false"></textarea>
+    <p class="muted">PDF is not on the list by default, so you can still read PDFs in the
+    browser. Add it here if you want those downloads in Daryafter too.</p>
+  </section>
+
+  <section>
+    <label for="port">Daryafter bridge port:</label>
+    <input type="number" id="port" min="1024" max="65535" step="1">
+    <p class="muted">Must match Daryafter's bridge port (default 27240). Normally you never
+    need to change this.</p>
+  </section>
+
+  <section class="status" id="status"></section>
+
+  <section>
+    <button id="check">Check connection</button>
+    <button id="test">Send a test link</button>
+    <button id="save">Save</button>
+  </section>
+
+  <p class="muted">The bridge only listens on 127.0.0.1 and rejects requests that do not
+  come from this extension, so web pages cannot abuse it. In Firefox, if auto-download
+  does nothing, open about:addons, this extension's "Permissions" tab and make sure
+  "Access your data for all websites" is enabled (the content script needs it).</p>
+
+  <script src="options.js"></script>
+</body>
+</html>

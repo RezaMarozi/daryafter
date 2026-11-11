@@ -76,7 +76,7 @@ def main():
 
     service = FakeService()
     bridge = EngineBridge()
-    win = MainWindow(service, bridge, Settings(download_dir="/tmp"), private=True)
+    win = MainWindow(service, bridge, Settings(download_dir="/tmp", browser_integration=False), private=True)
     for ev in (Event("added", snapshot=snap), Event("updated", snapshot=snap),
                Event("progress", snapshots=[snap], speed=1234.0), Event("completed", snapshot=snap),
                Event("offline", flag=True), Event("removed", item_id=1)):
@@ -85,7 +85,7 @@ def main():
     win.running_count()
     win._update_detail()
     win._retheme = lambda: None
-    win.apply_new_settings(Settings(download_dir="/tmp", theme="dark"))
+    win.apply_new_settings(Settings(download_dir="/tmp", browser_integration=False, theme="dark"))
     from daryafter.ui.extras import SummaryDialog, Toast
     from daryafter.ui.settings_dialog import SettingsDialog
     from daryafter.ui.widgets import SegmentMap, SpeedChart
@@ -95,7 +95,7 @@ def main():
                                       session_bytes=1000, min_speed=100.0, max_speed=300.0))
     SummaryDialog(done, None)
     Toast(None)
-    dlg = SettingsDialog(Settings(download_dir="/tmp"), None)
+    dlg = SettingsDialog(Settings(download_dir="/tmp", browser_integration=False), None)
     assert dlg.result_settings().connections == 8
     chart = SpeedChart()
     chart.set_values([1.0, 5e5, 2e6])
@@ -115,7 +115,7 @@ def main():
     win.detail.show_snapshot(snap, [1.0, 2.0])
     win.detail.show_overview(10.0, [1.0, 2.0])
 
-    dlg = AddDownloadDialog(service, Settings(download_dir="/tmp"), None, "http://example.com/f.zip")
+    dlg = AddDownloadDialog(service, Settings(download_dir="/tmp", browser_integration=False), None, "http://example.com/f.zip")
     dlg._check_link()
     dlg._seq = 1
     dlg._on_probed(1, ProbeResult("http://example.com/f.zip", "http://example.com/f.zip", 206, 5000, True,
@@ -145,7 +145,7 @@ def timers_and_queue(service):
     back = dialog.rule()
     assert back.action in ("start", "stop", "disconnect") and back.days, back
 
-    s = Settings(download_dir="/tmp", schedule=[Rule("start", 2, 0).to_dict(), "junk"])
+    s = Settings(download_dir="/tmp", browser_integration=False, schedule=[Rule("start", 2, 0).to_dict(), "junk"])
     dlg = SettingsDialog(s, None)
     assert len(dlg._s.schedule) == 2
     dlg._add_rule()
@@ -155,7 +155,7 @@ def timers_and_queue(service):
     dlg._refresh_rules()
     assert dlg.result_settings().schedule is not s.schedule          # a copy
 
-    win = MainWindow(service, EngineBridge(), Settings(download_dir="/tmp"), private=False)
+    win = MainWindow(service, EngineBridge(), Settings(download_dir="/tmp", browser_integration=False), private=False)
     for action in ("start", "stop", "disconnect"):
         win._on_event(Event("schedule", text=action))
     win._on_event(Event("schedule", text="stop", flag=True))         # a once-timer: window saves the settings
@@ -186,7 +186,7 @@ def lock_flow(service):
     from daryafter.ui.password_dialog import CHANGE, REMOVE, SET, PasswordDialog
     from daryafter.ui.settings_dialog import SettingsDialog
 
-    locked_settings = Settings(download_dir="/tmp")
+    locked_settings = Settings(download_dir="/tmp", browser_integration=False)
     locked_settings.set_password("secret")
     win = MainWindow(service, EngineBridge(), locked_settings, private=False)
     assert win.lock.locked, "a password is set, so the app must start locked"
@@ -214,7 +214,7 @@ def lock_flow(service):
     win.apply_new_settings(locked_settings.copy())
     assert win.settings.lock_enabled
 
-    plain = MainWindow(service, EngineBridge(), Settings(download_dir="/tmp"), private=True)
+    plain = MainWindow(service, EngineBridge(), Settings(download_dir="/tmp", browser_integration=False), private=True)
     assert not plain.lock.locked
     plain.lock_now()
     assert not plain.lock.locked, "no password: nothing to lock"
