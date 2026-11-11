@@ -1,0 +1,7 @@
+{
+  "name": "daryafter",
+  "description": "Starts the Daryafter download manager when the browser extension needs it.",
+  "path": "/usr/lib/daryafter/daryafter-native-host",
+  "type": "stdio",
+  "allowed_extensions": ["daryafter@daryafter.local"]
+}

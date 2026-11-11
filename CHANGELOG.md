@@ -24,8 +24,15 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
     port 27240): loopback only, requires a custom header and refuses requests whose origin
     is a web page, so hostile sites cannot forge requests; switch it off in Settings >
     General. Extension-provided file names are honoured; the add dialog still appears when
-    "Ask for the file name" is on. Covered by 14 new tests in `tests/test_browser_server.py`
-    (suite: 115 passed) and verified against the running app.
+    "Ask for the file name" is on.
+  - **auto-start**: when the bridge is unreachable, the extension starts Daryafter through a
+    native messaging host (`extension/native-host/`; installed system-wide by the package for
+    Firefox, `install.sh` for Chrome/Chromium), and the pop-up offers a Start button.
+    Covered by 13 tests in `tests/test_native_host.py`.
+  - Covered by 14 new tests in `tests/test_browser_server.py` (suite: 128 passed) and verified
+    live: ping OK, refused web origin, accepted extension request, clicked-download
+    interception, normal-link pass-through, and a real auto-start (app down -> click ->
+    app started -> download added) driven through headless Firefox.
 - Native Wayland session support:
   - Idle-time detection now works on Wayland compositors (used by the app-lock
     auto-lock timer). It uses the `ext-idle-notify-v1` compositor protocol

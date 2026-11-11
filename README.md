@@ -177,6 +177,16 @@ rejected unless they carry a custom header that web pages cannot send, so websit
 the bridge. You can switch the bridge off in Daryafter under **Settings > General > "Accept
 downloads from the Daryafter browser extension"**.
 
+**If Daryafter is not running**, the extension starts it for you through a native messaging
+host:
+
+- the daryafter package installs the host system-wide for Firefox
+  (`/usr/lib/mozilla/native-messaging-hosts/daryafter.json`) — works out of the box;
+- for Chrome/Chromium, run `extension/native-host/install.sh` once and set `CHROME_ID` to the
+  extension ID shown on `chrome://extensions` (unpacked extensions have a path-derived ID):
+  `CHROME_ID=abcd... ./extension/native-host/install.sh`;
+- the pop-up also shows a **Start Daryafter** button whenever the app is not reachable.
+
 ### Install in Firefox (temporary, for testing)
 
 1. Start Daryafter.

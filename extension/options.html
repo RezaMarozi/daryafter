@@ -48,9 +48,12 @@
   </section>
 
   <p class="muted">The bridge only listens on 127.0.0.1 and rejects requests that do not
-  come from this extension, so web pages cannot abuse it. In Firefox, if auto-download
-  does nothing, open about:addons, this extension's "Permissions" tab and make sure
-  "Access your data for all websites" is enabled (the content script needs it).</p>
+  come from this extension, so web pages cannot abuse it. If Daryafter is not running, the
+  extension starts it through the native messaging host (installed by the daryafter package
+  system-wide, or run <code>extension/native-host/install.sh</code> for a user-level
+  registration). In Firefox, if auto-download does nothing, open about:addons, this
+  extension's "Permissions" tab and make sure "Access your data for all websites" is
+  enabled (the content script needs it).</p>
 
   <script src="options.js"></script>
 </body>

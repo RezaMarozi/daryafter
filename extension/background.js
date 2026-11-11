@@ -81,6 +81,62 @@ async function pingServer(settings) {
   }
 }
 
+/* Ask the native messaging host to start Daryafter when it is not running. */
+function nativeStart() {
+  return new Promise((resolve) => {
+    let port;
+    try {
+      port = api.runtime.connectNative("daryafter");
+    } catch (err) {
+      resolve({ ok: false, error: String(err) });      // no host registered
+      return;
+    }
+    let settled = false;
+    const done = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { port.disconnect(); } catch (err) { /* already gone */ }
+      resolve(value);
+    };
+    const timer = setTimeout(() => done({ ok: false, error: "timeout" }), 15000);
+    port.onMessage.addListener((msg) => {
+      done(msg && msg.ok ? msg : { ok: false, error: (msg && msg.error) || "host refused" });
+    });
+    port.onDisconnect.addListener(() => {
+      const err = api.runtime.lastError;               // only valid during disconnect
+      done({ ok: false, error: err ? String(err.message || err) : "host exited" });
+    });
+    port.postMessage({ cmd: "start" });
+  });
+}
+
+/* Wait until the bridge answers, up to `ms`. */
+async function waitUntilRunning(settings, ms) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (await pingServer(settings)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return false;
+}
+
+/* Send a link, starting Daryafter through the native host when needed. */
+async function sendToDaryafterWithStart(url, referrer, filename, settings) {
+  let result = await sendToDaryafter(url, referrer, filename, settings);
+  if (result.offline) {
+    const started = await nativeStart();
+    if (started.ok) {
+      if (await waitUntilRunning(settings, 15000)) {
+        result = await sendToDaryafter(url, referrer, filename, settings);
+      } else {
+        result = { ok: false, offline: true, error: "Daryafter did not come up" };
+      }
+    }
+  }
+  return result;
+}
+
 /* ---- small user feedback ---------------------------------------------- */
 
 function setBadge(text, color) {
@@ -173,15 +229,21 @@ api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return;
       }
       case "download": {
-        const result = await sendToDaryafter(msg.url, msg.referrer, msg.filename, settings);
+        const result = await sendToDaryafterWithStart(msg.url, msg.referrer, msg.filename, settings);
         reportResult(result, msg.url);
         sendResponse(result);
         return;
       }
       case "testDownload": {
-        const result = await sendToDaryafter(msg.url, "", "", settings);
+        const result = await sendToDaryafterWithStart(msg.url, "", "", settings);
         reportResult(result, msg.url);
         sendResponse(result);
+        return;
+      }
+      case "startDaryafter": {
+        const started = await nativeStart();
+        const running = started.ok && (await waitUntilRunning(settings, 15000));
+        sendResponse({ running, error: started.ok ? "" : (started.error || "") });
         return;
       }
     }
@@ -192,7 +254,7 @@ api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function handleDownload(url, referrer, filename) {
   const settings = await loadSettings();
-  const result = await sendToDaryafter(url, referrer, filename, settings);
+  const result = await sendToDaryafterWithStart(url, referrer, filename, settings);
   reportResult(result, url);
 }
 

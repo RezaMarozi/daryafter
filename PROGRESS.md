@@ -39,6 +39,16 @@ Before the Linux port, Windows testing was limited: the GUI was only smoke-teste
       Bridge covered by `tests/test_browser_server.py` (14 tests); extension verified with the
       live app (ping / refused web origin / accepted extension request). Manual in-browser
       testing (about:debugging temporary add-on, chrome://extensions load unpacked) still to do.
+- [x] Extension auto-start + live Firefox verification: when Daryafter is not running, the
+      extension starts it via a native messaging host (`extension/native-host/`, packaged to
+      `/usr/lib/daryafter/daryafter-native-host` with a system-wide Firefox manifest;
+      `install.sh` registers user-level manifests for Chrome/Chromium).
+      Firefox note: MV3 still expects the MV2 permission spelling `nativeMessaging`;
+      `native_messaging` is silently stripped. End-to-end verified in a headless Firefox
+      (temporary add-on loaded via the WebDriver-BiDi `webExtension.install` command):
+      clicked .zip/.mp4/`<a download>` links all reached the bridge, a normal link was not
+      intercepted, and with the app down a click auto-started it and the download went
+      through. Installed on this system as daryafter 0.1.1-3.
 
 Windows still needs retesting after the Linux changes.
 

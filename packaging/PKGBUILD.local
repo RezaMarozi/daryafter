@@ -1,0 +1,61 @@
+# Local-only build wrapper: builds the package from the working tree copied
+# into packaging/src/daryafter-0.1.1 (no network access, nothing published).
+pkgname=daryafter
+pkgver=0.1.1
+pkgrel=3
+pkgdesc="Free, open-source multi-connection download manager"
+arch=('any')
+url="https://github.com/RezaMarozi/daryafter"
+license=('MIT')
+depends=(
+    'python'
+    'pyside6'
+    'qt6-wayland'
+    'python-httpx'
+    'python-h2'
+    'python-socksio'
+    'python-truststore'
+    'hicolor-icon-theme'
+)
+optdepends=(
+    'libnotify: desktop notification fallback via notify-send'
+)
+makedepends=(
+    'python-build'
+    'python-installer'
+    'python-setuptools'
+)
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+    /usr/bin/python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+
+    /usr/bin/python -m installer --destdir="$pkgdir" dist/*.whl
+    find "$pkgdir" -type d -name __pycache__ -prune -exec rm -rf {} +
+    find "$pkgdir" -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
+
+    install -Dm644 packaging/daryafter.desktop \
+        "$pkgdir/usr/share/applications/daryafter.desktop"
+
+    install -Dm644 packaging/daryafter.svg \
+        "$pkgdir/usr/share/icons/hicolor/scalable/apps/daryafter.svg"
+
+    # Native messaging host: lets the browser extension start Daryafter when
+    # it is not running. The Firefox manifest is system-wide; for Chrome/
+    # Chromium the manifest needs the extension's ID, so users run
+    # extension/native-host/install.sh from /usr/share/daryafter/extension.
+    install -Dm755 extension/native-host/daryafter_native_host.py \
+        "$pkgdir/usr/lib/daryafter/daryafter-native-host"
+    install -Dm644 packaging/daryafter-native-host.json \
+        "$pkgdir/usr/lib/mozilla/native-messaging-hosts/daryafter.json"
+    install -d "$pkgdir/usr/share/daryafter"
+    cp -r extension "$pkgdir/usr/share/daryafter/extension"
+    chmod -R u=rwX,go=rX "$pkgdir/usr/share/daryafter/extension"
+
+    install -Dm644 LICENSE \
+        "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

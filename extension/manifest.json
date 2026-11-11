@@ -13,7 +13,8 @@
   "permissions": [
     "contextMenus",
     "storage",
-    "notifications"
+    "notifications",
+    "nativeMessaging"
   ],
   "host_permissions": [
     "http://127.0.0.1/*",
