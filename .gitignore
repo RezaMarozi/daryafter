@@ -35,6 +35,8 @@ Desktop.ini
 # Local packaging build artifacts
 packaging/src/
 packaging/pkg/
+packaging/deb-root/
+packaging/rpm-build/
 packaging/*.tar.gz
 packaging/*.pkg.tar.zst
 
