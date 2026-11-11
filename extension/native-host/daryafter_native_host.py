@@ -24,6 +24,7 @@ import socket
 import struct
 import subprocess
 import sys
+import time
 
 BRIDGE_HOST = "127.0.0.1"
 BRIDGE_PORT = 27240
@@ -83,14 +84,13 @@ def start_app() -> str:
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     # Give the app time to open the bridge before answering, so the
     # extension can go straight back to the HTTP bridge.
-    import time
-
     waited = 0.0
     while waited < START_TIMEOUT:
         time.sleep(POLL_INTERVAL)
         waited += POLL_INTERVAL
         if bridge_reachable():
-            return "started"                             # slow start; let the extension retry
+            return "started"
+    # It may still be starting; report success and let the extension retry.
     return "started"
 
 
@@ -99,8 +99,6 @@ def handle(message: dict) -> dict:
     if command == "status":
         return {"ok": True, "running": bridge_reachable()}
     if command == "start":
-        if bridge_reachable():
-            return {"ok": True, "action": "already-running"}
         try:
             return {"ok": True, "action": start_app()}
         except FileNotFoundError as exc:

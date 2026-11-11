@@ -2,27 +2,84 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
   <style>
-    body { font: 13px sans-serif; min-width: 260px; margin: 12px; color: #222; }
-    h1 { font-size: 14px; margin: 0 0 10px; }
-    .status { margin-bottom: 10px; }
-    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
-           background: #999; vertical-align: middle; }
-    .ok .dot { background: #0B7F99; } .bad .dot { background: #B03030; }
-    #start-btn { margin-bottom: 8px; }
-    label { display: block; margin: 8px 0; }
-    footer { margin-top: 12px; font-size: 12px; }
-    a { color: #0B7F99; }
+    :root {
+      --card: #ffffff; --text: #22282b; --muted: #6b7a80; --accent: #0B7F99;
+      --accent-weak: rgba(11, 127, 153, .12); --bad: #B03030;
+      --bad-weak: rgba(176, 48, 48, .1); --border: #dfe5e8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --card: #212528; --text: #e6eaec; --muted: #97a3a8; --accent: #3aa8c4;
+        --accent-weak: rgba(58, 168, 196, .16); --bad: #e06a6a;
+        --bad-weak: rgba(224, 106, 106, .12); --border: #33393e;
+      }
+    }
+    body {
+      font: 13px/1.5 system-ui, sans-serif; color: var(--text);
+      background: var(--card); margin: 0; width: 300px;
+    }
+    header { display: flex; align-items: center; gap: 8px; padding: 12px 14px 6px; }
+    header img { width: 20px; height: 20px; }
+    h1 { font-size: 14px; margin: 0; }
+    main { padding: 4px 14px 14px; }
+
+    .status {
+      display: flex; align-items: center; gap: 8px; margin: 6px 0 12px;
+      padding: 7px 10px; border-radius: 8px; font-size: 12.5px;
+      background: var(--accent-weak); color: var(--accent);
+    }
+    .status.bad { background: var(--bad-weak); color: var(--bad); }
+    .status .dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+    #start-btn { display: none; margin: 0 0 12px; width: 100%; }
+    #start-btn.show { display: block; }
+    button {
+      padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+    }
+    button:disabled { opacity: .55; cursor: default; }
+
+    .switch-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 12px; }
+    .switch-row input { position: absolute; opacity: 0; width: 0; }
+    .track {
+      flex: none; width: 36px; height: 20px; border-radius: 10px;
+      background: var(--muted); position: relative; cursor: pointer; transition: background .15s;
+    }
+    .track::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px;
+      border-radius: 50%; background: #fff; transition: left .15s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    }
+    input:checked + .track { background: var(--accent); }
+    input:checked + .track::after { left: 19px; }
+    input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .switch-label { cursor: pointer; }
+    .hint { color: var(--muted); font-size: 11.5px; margin: 0 0 10px; }
+    footer { padding: 8px 14px 12px; border-top: 1px solid var(--border); }
+    a { color: var(--accent); font-size: 12.5px; }
   </style>
 </head>
 <body>
-  <h1>Daryafter</h1>
-  <div class="status" id="status"><span class="dot"></span><span id="status-text">Checking...</span></div>
-  <button id="start-btn" hidden>Start Daryafter</button>
-  <label><input type="checkbox" id="auto"> Auto-download clicked download links</label>
+  <header>
+    <img src="icons/icon32.png" alt="">
+    <h1>Daryafter</h1>
+  </header>
+  <main>
+    <div class="status" id="status"><span class="dot"></span><span id="status-text">Checking...</span></div>
+    <button id="start-btn" class="primary">Start Daryafter</button>
+    <div class="switch-row">
+      <input type="checkbox" id="auto">
+      <label class="track" for="auto"></label>
+      <label class="switch-label" for="auto">Auto-download clicked links</label>
+    </div>
+    <p class="hint">Hands every clicked download link to Daryafter instead of the browser.</p>
+  </main>
   <footer>
-    <a href="options.html" id="options-link" target="_blank">Options</a><br>
-    Daryafter must be running for downloads to work.
+    <a href="options.html" id="options-link" target="_blank">Options</a>
   </footer>
   <script src="popup.js"></script>
 </body>

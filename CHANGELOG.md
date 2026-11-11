@@ -50,6 +50,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
   taskbars and window rules).
 
 ### Changed
+- The browser extension's options page and pop-up were redesigned: card layout, switch
+  controls, a proper connection-status area, light/dark styling that follows the browser
+  theme, and a "Saved" confirmation. Behaviour and setting names are unchanged. The native
+  messaging host and its tests were tidied in the same pass (no functional changes).
 - If the Wayland platform plugin fails to start on a Wayland session, the app
   automatically retries with the X11 (`xcb`) plugin instead of aborting.
 - The default interface font on Linux is now the system font (clamped to a

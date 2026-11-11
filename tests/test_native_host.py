@@ -2,7 +2,6 @@
 import io
 import json
 import struct
-import subprocess
 import unittest
 from unittest import mock
 

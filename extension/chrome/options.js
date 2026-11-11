@@ -16,6 +16,19 @@ const autoBox = document.getElementById("auto");
 const extensionsBox = document.getElementById("extensions");
 const portBox = document.getElementById("port");
 const statusBox = document.getElementById("status");
+const statusText = document.getElementById("status-text");
+const saveBtn = document.getElementById("save");
+const checkBtn = document.getElementById("check");
+const testBtn = document.getElementById("test");
+
+function showStatus(ok, text) {
+  statusBox.className = `status show ${ok ? "ok" : "bad"}`;
+  statusText.textContent = text;
+}
+
+function hideStatus() {
+  statusBox.className = "status";
+}
 
 async function load() {
   const stored = await api.storage.local.get(DEFAULTS);
@@ -25,20 +38,12 @@ async function load() {
   portBox.value = Number(settings.port) || DEFAULTS.port;
 }
 
-async function save() {
-  const extensions = extensionsBox.value
-    .split(/[\s,]+/)
-    .map((item) => item.trim().toLowerCase().replace(/^\./, ""))
-    .filter((item) => /^[a-z0-9]{1,10}$/.test(item));
-  const unique = [...new Set(extensions)];
-  await api.storage.local.set({
-    autoEnabled: autoBox.checked,
-    extensions: unique,
-    port: clampPort(portBox.value),
-  });
-  extensionsBox.value = unique.join("\n");
-  statusBox.className = "status ok";
-  statusBox.textContent = "Saved.";
+function parseExtensions() {
+  return [...new Set(
+    extensionsBox.value
+      .split(/[\s,]+/)
+      .map((item) => item.trim().toLowerCase().replace(/^\./, ""))
+      .filter((item) => /^[a-z0-9]{1,10}$/.test(item)))];
 }
 
 function clampPort(value) {
@@ -47,9 +52,21 @@ function clampPort(value) {
   return port;
 }
 
-function setStatus(ok, text) {
-  statusBox.className = `status ${ok ? "ok" : "bad"}`;
-  statusBox.textContent = text;
+async function save() {
+  const extensions = parseExtensions();
+  await api.storage.local.set({
+    autoEnabled: autoBox.checked,
+    extensions,
+    port: clampPort(portBox.value),
+  });
+  extensionsBox.value = extensions.join("\n");
+  portBox.value = clampPort(portBox.value);
+  saveBtn.textContent = "Saved";
+  saveBtn.disabled = true;
+  setTimeout(() => {
+    saveBtn.textContent = "Save";
+    saveBtn.disabled = false;
+  }, 1600);
 }
 
 async function checkConnection() {
@@ -60,29 +77,36 @@ async function checkConnection() {
     });
     if (response.ok) {
       const data = await response.json();
-      setStatus(true, `Connected: ${data.app || "Daryafter"} ${data.version || ""}`);
+      showStatus(true, `Connected to Daryafter ${data.version || ""}`);
     } else {
-      setStatus(false, `The bridge answered but reported HTTP ${response.status}.`);
+      showStatus(false, `The bridge answered but reported HTTP ${response.status}.`);
     }
   } catch (err) {
-    setStatus(false, "Could not reach the bridge. Is Daryafter running, and is the "
+    showStatus(false, "Could not reach the bridge. Is Daryafter running, and is the "
       + "browser extension enabled in Daryafter's Settings?");
   }
 }
 
 async function sendTest() {
   await save();
+  testBtn.disabled = true;
   const result = await api.runtime.sendMessage({
     type: "testDownload",
     url: "https://www.example.com/",
   }).catch(() => null);
-  if (!result) setStatus(false, "The background script did not answer. Reload the extension.");
-  else if (result.ok) setStatus(true, "Test link sent. Look at the Daryafter window "
-    + "(and its name dialog, if 'Ask for the file name' is on).");
+  testBtn.disabled = false;
+  if (!result) {
+    showStatus(false, "The background script did not answer. Reload the extension.");
+  } else if (result.ok) {
+    showStatus(true, "Test link sent. Look at the Daryafter window (and its name dialog, "
+      + "if 'Ask for the file name' is on).");
+  } else {
+    showStatus(false, `The link was refused: ${result.error || "unknown error"}`);
+  }
 }
 
-document.getElementById("check").addEventListener("click", checkConnection);
-document.getElementById("test").addEventListener("click", sendTest);
-document.getElementById("save").addEventListener("click", save);
+saveBtn.addEventListener("click", save);
+checkBtn.addEventListener("click", checkConnection);
+testBtn.addEventListener("click", sendTest);
 
 load();

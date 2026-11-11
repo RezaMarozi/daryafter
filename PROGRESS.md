@@ -49,6 +49,10 @@ Before the Linux port, Windows testing was limited: the GUI was only smoke-teste
       clicked .zip/.mp4/`<a download>` links all reached the bridge, a normal link was not
       intercepted, and with the app down a click auto-started it and the download went
       through. Installed on this system as daryafter 0.1.1-3.
+- [x] Polish pass: options page and pop-up redesigned (cards, switches, light/dark via the
+      browser theme, "Saved" feedback), native messaging host and tests tidied, .gitignore
+      reorganised (build output, *.xpi, the local makepkg wrapper is ignored and untracked),
+      and the repo is ready to push.
 
 Windows still needs retesting after the Linux changes.
 

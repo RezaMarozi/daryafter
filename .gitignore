@@ -23,25 +23,33 @@ portable.flag
 *.log
 .env
 
-# ---- build output (.exe and Appimage packaging) ----------------------------------------
+# ---- build output ---------------------------------------------------------
 /build/
 /dist/
+/build-appimage/
 *.spec
-# ---- editors and Windows --------------------------------------------------
-.vscode/
-.idea/
-Thumbs.db
-Desktop.ini
-# Local packaging build artifacts
+
+# ---- AppImage -------------------------------------------------------------
+/appimage_entry.py
+/AppDir/
+/*.AppImage
+*.AppImage.zsync
+
+# ---- browser extension build output ---------------------------------------
+*.xpi
+
+# ---- local packaging build artifacts --------------------------------------
 packaging/src/
 packaging/pkg/
 packaging/deb-root/
 packaging/rpm-build/
 packaging/*.tar.gz
 packaging/*.pkg.tar.zst
+# local-only makepkg wrapper used to build the package from the working tree
+packaging/PKGBUILD.local
 
-/appimage_entry.py
-
-/AppDir/
-
-/*.AppImage
+# ---- editors and Windows --------------------------------------------------
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
