@@ -1,0 +1,157 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python extension/build.py --check
+      - name: Check JavaScript
+        run: |
+          for file in extension/src/*.js; do node --check "$file"; done
+      - name: Test
+        run: |
+          python -m pip install -e ".[dev]" || python -m pip install -e .
+          python -m pip install pytest
+          python -m pytest tests/ -q --import-mode=importlib
+
+  extensions:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python extension/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-extensions
+          path: dist/extensions/*.zip
+
+  linux:
+    needs: verify
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm patchelf desktop-file-utils wget
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+      - name: Build application
+        run: pyinstaller Daryafter.spec --noconfirm
+      - name: Build DEB
+        run: |
+          mkdir -p pkg/DEBIAN pkg/opt/daryafter pkg/usr/bin \
+            pkg/usr/share/applications pkg/usr/share/icons/hicolor/scalable/apps
+          cp -a dist/Daryafter/. pkg/opt/daryafter/
+          printf '#!/bin/sh\nexec /opt/daryafter/Daryafter "$@"\n' > pkg/usr/bin/daryafter
+          chmod 755 pkg/usr/bin/daryafter
+          cp packaging/daryafter.desktop pkg/usr/share/applications/
+          cp packaging/daryafter.svg pkg/usr/share/icons/hicolor/scalable/apps/daryafter.svg
+          cat > pkg/DEBIAN/control <<'EOF'
+          Package: daryafter
+          Version: 0.1.1
+          Section: net
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Reza Marozi
+          Description: Free, open-source multi-connection download manager
+          Depends: libc6, libstdc++6, zlib1g
+          EOF
+          dpkg-deb --root-owner-group --build pkg dist/daryafter_0.1.1_amd64.deb
+      - name: Build RPM
+        run: |
+          mkdir -p "$RUNNER_TEMP/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          rpmbuild -bb packaging/rpm/daryafter.spec \
+            --define "_topdir $RUNNER_TEMP/rpmbuild" \
+            --define "appdir $GITHUB_WORKSPACE/dist/Daryafter" \
+            --define "desktop $GITHUB_WORKSPACE/packaging/daryafter.desktop" \
+            --define "icon $GITHUB_WORKSPACE/packaging/daryafter.svg"
+          mkdir -p dist
+          cp "$RUNNER_TEMP"/rpmbuild/RPMS/*/*.rpm dist/
+      - name: Build AppImage
+        run: |
+          mkdir -p AppDir/opt/daryafter AppDir/usr/bin \
+            AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/scalable/apps
+          cp -a dist/Daryafter/. AppDir/opt/daryafter/
+          cp packaging/daryafter.desktop AppDir/usr/share/applications/
+          cp packaging/daryafter.svg AppDir/usr/share/icons/hicolor/scalable/apps/daryafter.svg
+          cat > AppDir/AppRun <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/opt/daryafter/Daryafter" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+          ln -s ../opt/daryafter/Daryafter AppDir/usr/bin/daryafter
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run AppDir dist/Daryafter-x86_64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
+
+  windows:
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Windows application
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+          pyinstaller Daryafter.spec --noconfirm
+          Compress-Archive -Path dist/Daryafter/* -DestinationPath dist/Daryafter-Windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: dist/Daryafter-Windows-x64.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [extensions, linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/**/*.zip
+            release-assets/**/*.deb
+            release-assets/**/*.rpm
+            release-assets/**/*.AppImage
+          generate_release_notes: true
