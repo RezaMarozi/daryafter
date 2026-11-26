@@ -37,22 +37,26 @@ Before the Linux port, Windows testing was limited: the GUI was only smoke-teste
       bridge in the app (`core/browser_server.py`, port 27240, loopback only, custom-header +
       Origin checks so web pages cannot forge requests; toggle in Settings > General).
       Bridge covered by `tests/test_browser_server.py` (14 tests); extension verified with the
-      live app (ping / refused web origin / accepted extension request). Manual in-browser
-      testing (about:debugging temporary add-on, chrome://extensions load unpacked) still to do.
-- [x] Extension auto-start + live Firefox verification: when Daryafter is not running, the
+      live app (ping / refused web origin / accepted extension request).
+- [x] Extension auto-start + live browser verification: when Daryafter is not running, the
       extension starts it via a native messaging host (`extension/native-host/`, packaged to
       `/usr/lib/daryafter/daryafter-native-host` with a system-wide Firefox manifest;
       `install.sh` registers user-level manifests for Chrome/Chromium).
       Firefox note: MV3 still expects the MV2 permission spelling `nativeMessaging`;
-      `native_messaging` is silently stripped. End-to-end verified in a headless Firefox
-      (temporary add-on loaded via the WebDriver-BiDi `webExtension.install` command):
-      clicked .zip/.mp4/`<a download>` links all reached the bridge, a normal link was not
-      intercepted, and with the app down a click auto-started it and the download went
-      through. Installed on this system as daryafter 0.1.1-3.
-- [x] Polish pass: options page and pop-up redesigned (cards, switches, light/dark via the
-      browser theme, "Saved" feedback), native messaging host and tests tidied, .gitignore
-      reorganised (build output, *.xpi, the local makepkg wrapper is ignored and untracked),
-      and the repo is ready to push.
+      `native_messaging` is silently stripped. End-to-end verified in headless Firefox
+      (temporary add-on via Marionette, real app): clicked .zip/.mp4/`<a download>` links
+      reached the bridge, a normal link was not intercepted, settings persisted across
+      reloads, and with the app down a click auto-started it and the download went through.
+      Chromium 158 was verified the same way over CDP: MV3 service worker, content script,
+      options/pop-up, bridge delivery, persistence and validation. The Chromium native host
+      is not registered system-wide (needs `CHROME_ID`), so auto-start was only exercised in
+      Firefox. Installed on this system as daryafter 0.1.1-3.
+- [x] Extension layout/build: one shared source tree (`extension/src/`), per-browser manifests,
+      and `extension/build.py` producing independent `dist/extensions/{firefox,chrome}` folders
+      plus ZIPs. Options page and pop-up redesigned (cards, switches, light/dark, connection
+      status, inline validation, restore defaults, Start Daryafter), `.gitignore` covers build
+      output, and `.github/workflows/extension.yml` validates, tests, packages and uploads both
+      extensions (release assets on `v*` tags; optional desktop wheel on manual runs).
 
 Windows still needs retesting after the Linux changes.
 

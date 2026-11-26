@@ -3,7 +3,8 @@
  *
  * Talks to the Daryafter download manager through its small localhost
  * bridge (http://127.0.0.1:PORT). Daryafter must be running for this to
- * work; the extension shows a notification when it is not.
+ * work; the extension shows a notification when it is not, and asks the
+ * native messaging host to start it when possible.
  *
  * The server requires the custom "X-Daryafter-Client" header: ordinary
  * web pages cannot send it (CORS pre-flight fails), so no web site can
@@ -11,24 +12,23 @@
  */
 "use strict";
 
-const api = globalThis.browser ?? globalThis.chrome;
+/* Chrome loads only background.js as the service worker, so pull in the
+   shared helpers there. Firefox loads common.js from background.scripts. */
+if (!globalThis.DaryafterCommon && typeof importScripts === "function") {
+  importScripts("common.js");
+}
 
-const DEFAULTS = {
-  autoEnabled: false,          // auto-download: hand clicked download links to Daryafter
-  port: 27240,                 // must match Daryafter's bridge port
-  extensions: [
-    "7z", "apk", "avi", "bin", "bz2", "cab", "crx", "deb", "dmg", "epub",
-    "exe", "flac", "gz", "img", "iso", "mkv", "mov", "mp3", "mp4", "msi",
-    "ogg", "pkg", "psd", "rar", "rpm", "tar", "wav", "webm", "xz", "zst", "zip",
-  ],
-};
+const {
+  api,
+  DEFAULTS,
+  CLIENT_HEADER,
+  basenameFromUrl,
+  matchesExtension,
+  safeReferrer,
+  serverUrl,
+} = globalThis.DaryafterCommon;
 
 const MENU_ID = "daryafter-download";
-const CLIENT_HEADER = { "X-Daryafter-Client": "daryafter-extension/1" };
-
-function serverUrl(path, settings) {
-  return `http://127.0.0.1:${settings.port || DEFAULTS.port}${path}`;
-}
 
 async function loadSettings() {
   const stored = await api.storage.local.get(DEFAULTS);
@@ -44,9 +44,6 @@ async function ensureSettings() {
   }
   if (Object.keys(missing).length) await api.storage.local.set(missing);
 }
-ensureSettings();
-api.runtime.onInstalled?.addListener(ensureSettings);
-api.runtime.onStartup?.addListener(ensureSettings);
 
 /* ---- server bridge ---------------------------------------------------- */
 
@@ -55,8 +52,13 @@ async function sendToDaryafter(url, referrer, filename, settings) {
   try {
     response = await fetch(serverUrl("/add", settings), {
       method: "POST",
+      cache: "no-store",
       headers: { "Content-Type": "application/json", ...CLIENT_HEADER },
-      body: JSON.stringify({ url, referrer, filename }),
+      body: JSON.stringify({
+        url,
+        referrer: safeReferrer(referrer),
+        filename: String(filename ?? "").trim(),
+      }),
     });
   } catch (err) {
     return { ok: false, offline: true, error: String(err) };
@@ -73,6 +75,7 @@ async function sendToDaryafter(url, referrer, filename, settings) {
 async function pingServer(settings) {
   try {
     const response = await fetch(serverUrl("/ping", settings), {
+      cache: "no-store",
       headers: CLIENT_HEADER,
     });
     return response.ok;
@@ -89,6 +92,10 @@ function nativeStart() {
       port = api.runtime.connectNative("daryafter");
     } catch (err) {
       resolve({ ok: false, error: String(err) });      // no host registered
+      return;
+    }
+    if (!port) {
+      resolve({ ok: false, error: "Native messaging is unavailable" });
       return;
     }
     let settled = false;
@@ -132,6 +139,8 @@ async function sendToDaryafterWithStart(url, referrer, filename, settings) {
       } else {
         result = { ok: false, offline: true, error: "Daryafter did not come up" };
       }
+    } else {
+      result = { ...result, error: started.error || result.error };
     }
   }
   return result;
@@ -143,21 +152,31 @@ function setBadge(text, color) {
   const target = api.action ?? api.browserAction;
   if (!target) return;
   try {
-    target.setBadgeText({ text });
-    target.setBadgeBackgroundColor({ color });
-    if (text) setTimeout(() => target.setBadgeText({ text: "" }), 3000);
+    const maybe = target.setBadgeText({ text });
+    if (maybe && typeof maybe.catch === "function") maybe.catch(() => {});
+    const colorMaybe = target.setBadgeBackgroundColor({ color });
+    if (colorMaybe && typeof colorMaybe.catch === "function") colorMaybe.catch(() => {});
+    if (text) {
+      setTimeout(() => {
+        try {
+          const clear = target.setBadgeText({ text: "" });
+          if (clear && typeof clear.catch === "function") clear.catch(() => {});
+        } catch (err) { /* no badge support */ }
+      }, 3000);
+    }
   } catch (err) { /* no badge support */ }
 }
 
 function notify(title, message) {
   if (!api.notifications) return;
   try {
-    api.notifications.create({
+    const maybe = api.notifications.create({
       type: "basic",
       iconUrl: api.runtime.getURL("icons/icon48.png"),
       title,
       message,
     });
+    if (maybe && typeof maybe.catch === "function") maybe.catch(() => {});
   } catch (err) { /* notifications unavailable */ }
 }
 
@@ -168,7 +187,8 @@ function reportResult(result, url) {
   }
   setBadge("!", "#B03030");
   if (result.offline) {
-    notify("Daryafter is not running", "Start Daryafter, then try the download again.");
+    notify("Daryafter is not running",
+           "Start Daryafter, then try the download again.");
   } else {
     notify("Daryafter refused the link", `${result.error || "Unknown error"}\n${url}`);
   }
@@ -176,42 +196,44 @@ function reportResult(result, url) {
 
 /* ---- context menu: "Download with Daryafter" --------------------------- */
 
-function basenameFromUrl(url) {
-  try {
-    const path = new URL(url).pathname;
-    const name = decodeURIComponent(path.split("/").pop() || "");
-    return name || "download";
-  } catch (err) {
-    return "download";
-  }
+function removeAllMenus() {
+  return new Promise((resolve) => {
+    try {
+      const maybe = api.contextMenus.removeAll(() => resolve());
+      if (maybe && typeof maybe.then === "function") maybe.then(resolve, resolve);
+    } catch (err) {
+      resolve();
+    }
+  });
 }
 
 async function setupMenu() {
+  if (!api.contextMenus) return;
   const settings = await loadSettings();
   const suffix = settings.autoEnabled ? " (auto-download is on)" : "";
-  if (api.contextMenus?.removeAll) {
-    api.contextMenus.removeAll(() => {
-      api.contextMenus.create({
-        id: MENU_ID,
-        title: `Download with Daryafter${suffix}`,
-        contexts: ["link", "image", "video", "audio"],
-      });
-    });
-  } else {
-    api.contextMenus.create({
+  await removeAllMenus();
+  try {
+    const maybe = api.contextMenus.create({
       id: MENU_ID,
       title: `Download with Daryafter${suffix}`,
       contexts: ["link", "image", "video", "audio"],
-    });
-  }
+    }, () => { void api.runtime.lastError; });
+    if (maybe && typeof maybe.catch === "function") maybe.catch(() => {});
+  } catch (err) { /* menus unavailable */ }
 }
-setupMenu();
-api.storage.onChanged?.addListener(setupMenu);      // keep the "(auto-download is on)" hint fresh
 
-api.contextMenus.onClicked.addListener((info, tab) => {
+api.runtime.onInstalled?.addListener(() => { ensureSettings(); setupMenu(); });
+api.runtime.onStartup?.addListener(() => { ensureSettings(); setupMenu(); });
+api.storage.onChanged?.addListener(() => { setupMenu(); });
+ensureSettings();
+setupMenu();
+
+api.contextMenus?.onClicked.addListener((info, tab) => {
   const url = info.linkUrl || info.srcUrl || info.frameUrl || info.pageUrl;
   if (!url) return;
-  handleDownload(url, (tab && tab.url) || "", basenameFromUrl(url));
+  const referrer = safeReferrer((tab && tab.url) || "");
+  const filename = basenameFromUrl(url, "");
+  handleDownload(url, referrer, filename);
 });
 
 /* ---- messages from the content script / pop-up / options --------------- */
@@ -219,23 +241,19 @@ api.contextMenus.onClicked.addListener((info, tab) => {
 api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
     const settings = await loadSettings();
-    switch (msg.type) {
+    switch (msg && msg.type) {
       case "ping":
         sendResponse({ running: await pingServer(settings) });
         return;
-      case "shouldIntercept": {
-        if (!settings.autoEnabled) { sendResponse({ intercept: false }); return; }
-        sendResponse({ intercept: matchesExtension(msg.href, settings.extensions) });
+      case "shouldIntercept":
+        sendResponse({
+          intercept: Boolean(settings.autoEnabled)
+            && matchesExtension(msg.href, settings.extensions),
+        });
         return;
-      }
       case "download": {
-        const result = await sendToDaryafterWithStart(msg.url, msg.referrer, msg.filename, settings);
-        reportResult(result, msg.url);
-        sendResponse(result);
-        return;
-      }
-      case "testDownload": {
-        const result = await sendToDaryafterWithStart(msg.url, "", "", settings);
+        const result = await sendToDaryafterWithStart(
+          msg.url, msg.referrer, msg.filename, settings);
         reportResult(result, msg.url);
         sendResponse(result);
         return;
@@ -256,15 +274,4 @@ async function handleDownload(url, referrer, filename) {
   const settings = await loadSettings();
   const result = await sendToDaryafterWithStart(url, referrer, filename, settings);
   reportResult(result, url);
-}
-
-function matchesExtension(url, extensions) {
-  if (!url || !/^https?:/i.test(url)) return false;
-  let pathname = "";
-  try { pathname = new URL(url).pathname; } catch (err) { return false; }
-  const name = decodeURIComponent(pathname).split("/").pop() || "";
-  const dot = name.lastIndexOf(".");
-  if (dot < 0) return false;
-  const ext = name.slice(dot + 1).toLowerCase();
-  return extensions.some((item) => item.trim().toLowerCase() === ext);
 }

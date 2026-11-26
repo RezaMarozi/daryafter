@@ -8,12 +8,16 @@
  */
 "use strict";
 
-const api = globalThis.browser ?? globalThis.chrome;
+const {
+  api,
+  DEFAULTS,
+  basenameFromUrl,
+  isHttpUrl,
+  matchesExtension,
+  safeReferrer,
+} = globalThis.DaryafterCommon;
 
-/* Fallback before the background script has written its defaults into storage. */
-const FALLBACK = { autoEnabled: false, extensions: [] };
-
-let state = { autoEnabled: false, extensions: new Set() };
+let state = { autoEnabled: false, extensions: [] };
 
 loadState();
 api.storage.onChanged?.addListener((changes, area) => {
@@ -21,31 +25,28 @@ api.storage.onChanged?.addListener((changes, area) => {
 });
 
 async function loadState() {
-  const stored = await api.storage.local.get(FALLBACK);
+  const stored = await api.storage.local.get({
+    autoEnabled: DEFAULTS.autoEnabled,
+    extensions: DEFAULTS.extensions,
+  });
   state = {
     autoEnabled: Boolean(stored.autoEnabled),
-    extensions: new Set((stored.extensions || []).map((x) => String(x).toLowerCase())),
+    extensions: Array.isArray(stored.extensions)
+      ? stored.extensions.map((item) => String(item).toLowerCase())
+      : [],
   };
 }
 
 function nameFromAnchor(anchor) {
   if (anchor.download) return anchor.download;
-  try {
-    const name = decodeURIComponent(anchor.pathname.split("/").pop() || "");
-    return name || "download";
-  } catch (err) {
-    return "download";
-  }
+  return basenameFromUrl(anchor.href, "");
 }
 
 function shouldIntercept(anchor) {
   if (!state.autoEnabled) return false;
-  if (!/^https?:/i.test(anchor.href)) return false;          // only plain download links
+  if (!isHttpUrl(anchor.href)) return false;                  // only plain download links
   if (anchor.hasAttribute("download")) return true;           // <a download> always counts
-  const name = decodeURIComponent(anchor.pathname).split("/").pop() || "";
-  const dot = name.lastIndexOf(".");
-  if (dot < 0) return false;
-  return state.extensions.has(name.slice(dot + 1).toLowerCase());
+  return matchesExtension(anchor.href, state.extensions);
 }
 
 function handOver(anchor, event) {
@@ -54,13 +55,13 @@ function handOver(anchor, event) {
   api.runtime.sendMessage({
     type: "download",
     url: anchor.href,
-    referrer: location.href,
+    referrer: safeReferrer(location.href),
     filename: nameFromAnchor(anchor),
   }).catch((err) => { /* background unavailable */ });
 }
 
 function onClick(event) {
-  if (!state.autoEnabled) return;
+  if (!state.autoEnabled || event.defaultPrevented) return;
   if (event.button !== 0) return;                             // left click only
   if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
   const anchor = event.target.closest?.("a[href]");
@@ -69,7 +70,7 @@ function onClick(event) {
 }
 
 function onAuxClick(event) {
-  if (!state.autoEnabled) return;
+  if (!state.autoEnabled || event.defaultPrevented) return;
   if (event.button !== 1) return;                             // middle click
   const anchor = event.target.closest?.("a[href]");
   if (!anchor) return;

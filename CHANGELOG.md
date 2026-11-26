@@ -29,10 +29,11 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
     native messaging host (`extension/native-host/`; installed system-wide by the package for
     Firefox, `install.sh` for Chrome/Chromium), and the pop-up offers a Start button.
     Covered by 13 tests in `tests/test_native_host.py`.
-  - Folder layout: the Firefox manifest is `extension/manifest.json` (so any file picked in
-    "Load Temporary Add-on" resolves to it) and the Chrome manifest lives in
-    `extension/chrome/manifest.json` ("Load unpacked" needs it at a folder root);
-    `tests/test_extension_files.py` keeps the shared copies identical (suite: 134 passed).
+  - Layout: one shared source tree in `extension/src/`, with
+    `extension/firefox/manifest.json` (event page) and `extension/chrome/manifest.json`
+    (service worker). `python extension/build.py` assembles both independent builds and
+    ZIPs into `dist/extensions/`; `tests/test_extension_files.py` validates the manifests
+    and the build, so the two browsers cannot drift apart.
   - Covered by 14 new tests in `tests/test_browser_server.py` (suite: 128 passed) and verified
     live: ping OK, refused web origin, accepted extension request, clicked-download
     interception, normal-link pass-through, and a real auto-start (app down -> click ->
@@ -52,8 +53,15 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 ### Changed
 - The browser extension's options page and pop-up were redesigned: card layout, switch
   controls, a proper connection-status area, light/dark styling that follows the browser
-  theme, and a "Saved" confirmation. Behaviour and setting names are unchanged. The native
-  messaging host and its tests were tidied in the same pass (no functional changes).
+  theme, inline validation for the port and file-type list, a **Restore defaults** action,
+  an unsaved-changes indicator, and a **Start Daryafter** button when the app is not
+  running. Behaviour and setting names are unchanged. Invalid input is now reported
+  instead of being silently clamped or dropped. The native messaging host and its tests
+  were tidied in the same pass (no functional changes).
+- GitHub Actions now validate both manifests, syntax-check the extension JavaScript, run
+  the extension/native-host/bridge tests, build and upload both ZIPs, and attach them to
+  a GitHub release for `v*` tags. An optional workflow-dispatch job builds the desktop
+  wheel. No store publishing or credentials are involved.
 - If the Wayland platform plugin fails to start on a Wayland session, the app
   automatically retries with the X11 (`xcb`) plugin instead of aborting.
 - The default interface font on Linux is now the system font (clamped to a

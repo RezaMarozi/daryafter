@@ -59,17 +59,29 @@ package() {
     install -Dm644 packaging/daryafter.svg \
         "$pkgdir/usr/share/icons/hicolor/scalable/apps/daryafter.svg"
 
+    # Browser extension: both builds are assembled from extension/src/ plus
+    # the per-browser manifest, so the package ships exactly what the build
+    # script produced (and the ZIPs users can load directly).
+    /usr/bin/python extension/build.py --output "$srcdir/extension-build"
+    install -d "$pkgdir/usr/share/daryafter/extensions"
+    cp -r "$srcdir/extension-build/firefox" \
+          "$srcdir/extension-build/chrome" \
+          "$pkgdir/usr/share/daryafter/extensions/"
+    install -m644 "$srcdir/extension-build/"daryafter-*.zip \
+        "$pkgdir/usr/share/daryafter/extensions/"
+
     # Native messaging host: lets the browser extension start Daryafter when
     # it is not running. The Firefox manifest is system-wide; for Chrome/
     # Chromium the manifest needs the extension's ID, so users run
-    # extension/native-host/install.sh from /usr/share/daryafter/extension.
+    # /usr/share/daryafter/native-host/install.sh with CHROME_ID set.
     install -Dm755 extension/native-host/daryafter_native_host.py \
         "$pkgdir/usr/lib/daryafter/daryafter-native-host"
+    install -Dm755 extension/native-host/install.sh \
+        "$pkgdir/usr/share/daryafter/native-host/install.sh"
     install -Dm644 packaging/daryafter-native-host.json \
         "$pkgdir/usr/lib/mozilla/native-messaging-hosts/daryafter.json"
-    install -d "$pkgdir/usr/share/daryafter"
-    cp -r extension "$pkgdir/usr/share/daryafter/extension"
-    chmod -R u=rwX,go=rX "$pkgdir/usr/share/daryafter/extension"
+    chmod -R u=rwX,go=rX "$pkgdir/usr/share/daryafter/extensions" \
+                            "$pkgdir/usr/share/daryafter/native-host"
 
     install -Dm644 LICENSE \
         "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

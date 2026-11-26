@@ -1,86 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daryafter</title>
+  <link rel="stylesheet" href="common.css">
   <style>
-    :root {
-      --card: #ffffff; --text: #22282b; --muted: #6b7a80; --accent: #0B7F99;
-      --accent-weak: rgba(11, 127, 153, .12); --bad: #B03030;
-      --bad-weak: rgba(176, 48, 48, .1); --border: #dfe5e8;
+    body { width: 320px; }
+    .popup-header { padding: 14px 16px 0; margin-bottom: 12px; }
+    .popup-header img { width: 32px; height: 32px; }
+    .popup-header h1 { font-size: 16px; }
+    .popup-header .subtitle { font-size: 12px; }
+    .popup-main { padding: 0 16px 14px; display: grid; gap: 10px; }
+    .popup-card { padding: 14px; }
+    .popup-card .switch-row { align-items: flex-start; }
+    .popup-card .hint { margin-top: 2px; }
+    .popup-main .status { margin-top: 0; }
+    #start-btn { width: 100%; }
+    .bridge-line {
+      margin: 2px 0 0; color: var(--muted); font-size: 12px;
+      display: flex; gap: 6px; align-items: center;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --card: #212528; --text: #e6eaec; --muted: #97a3a8; --accent: #3aa8c4;
-        --accent-weak: rgba(58, 168, 196, .16); --bad: #e06a6a;
-        --bad-weak: rgba(224, 106, 106, .12); --border: #33393e;
-      }
+    .popup-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 10px 16px; border-top: 1px solid var(--border);
+      background: var(--surface);
     }
-    body {
-      font: 13px/1.5 system-ui, sans-serif; color: var(--text);
-      background: var(--card); margin: 0; width: 300px;
-    }
-    header { display: flex; align-items: center; gap: 8px; padding: 12px 14px 6px; }
-    header img { width: 20px; height: 20px; }
-    h1 { font-size: 14px; margin: 0; }
-    main { padding: 4px 14px 14px; }
-
-    .status {
-      display: flex; align-items: center; gap: 8px; margin: 6px 0 12px;
-      padding: 7px 10px; border-radius: 8px; font-size: 12.5px;
-      background: var(--accent-weak); color: var(--accent);
-    }
-    .status.bad { background: var(--bad-weak); color: var(--bad); }
-    .status .dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
-    #start-btn { display: none; margin: 0 0 12px; width: 100%; }
-    #start-btn.show { display: block; }
-    button {
-      padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--card); color: var(--text); font: inherit; cursor: pointer;
-    }
-    button.primary {
-      background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-    }
-    button:disabled { opacity: .55; cursor: default; }
-
-    .switch-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 12px; }
-    .switch-row input { position: absolute; opacity: 0; width: 0; }
-    .track {
-      flex: none; width: 36px; height: 20px; border-radius: 10px;
-      background: var(--muted); position: relative; cursor: pointer; transition: background .15s;
-    }
-    .track::after {
-      content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px;
-      border-radius: 50%; background: #fff; transition: left .15s;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-    }
-    input:checked + .track { background: var(--accent); }
-    input:checked + .track::after { left: 19px; }
-    input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .switch-label { cursor: pointer; }
-    .hint { color: var(--muted); font-size: 11.5px; margin: 0 0 10px; }
-    footer { padding: 8px 14px 12px; border-top: 1px solid var(--border); }
-    a { color: var(--accent); font-size: 12.5px; }
+    .popup-footer .hint { margin: 0; }
   </style>
 </head>
 <body>
-  <header>
+  <header class="app-header popup-header">
     <img src="icons/icon32.png" alt="">
-    <h1>Daryafter</h1>
-  </header>
-  <main>
-    <div class="status" id="status"><span class="dot"></span><span id="status-text">Checking...</span></div>
-    <button id="start-btn" class="primary">Start Daryafter</button>
-    <div class="switch-row">
-      <input type="checkbox" id="auto">
-      <label class="track" for="auto"></label>
-      <label class="switch-label" for="auto">Auto-download clicked links</label>
+    <div>
+      <h1>Daryafter</h1>
+      <p class="subtitle">Download manager</p>
     </div>
-    <p class="hint">Hands every clicked download link to Daryafter instead of the browser.</p>
+    <span class="version" id="version"></span>
+  </header>
+
+  <main class="popup-main">
+    <div class="status" id="status" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="status-text" id="status-text">Checking&hellip;</span>
+    </div>
+
+    <button id="start-btn" class="primary" type="button" hidden>Start Daryafter</button>
+
+    <div class="card popup-card">
+      <div class="switch-row">
+        <input type="checkbox" id="auto">
+        <label class="switch-track" for="auto" aria-hidden="true"></label>
+        <div>
+          <label class="switch-label" for="auto">Auto-download clicked links</label>
+          <p class="hint">Send download links to Daryafter instead of the browser.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="bridge-line">Bridge <code id="bridge">127.0.0.1:27240</code></p>
   </main>
-  <footer>
-    <a href="options.html" id="options-link" target="_blank">Options</a>
+
+  <footer class="popup-footer">
+    <button class="link" id="options-link" type="button">Options</button>
+    <span class="hint" id="save-note" role="status" aria-live="polite"></span>
   </footer>
+
+  <script src="common.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

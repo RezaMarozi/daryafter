@@ -160,10 +160,15 @@ both it and a compatible desktop notification daemon are available.
 ## Browser extension
 
 A WebExtension for **Firefox** and **Chrome/Chromium/Edge/Brave** ships in the
-[`extension/`](extension/) folder of this project (version 0.1.0, beta). The folder holds the
-Firefox manifest at its root (`extension/manifest.json`) and the Chrome manifest inside
-[`extension/chrome/`](extension/chrome/); the two browsers need different manifest shapes, and
-`tests/test_extension_files.py` keeps the shared files identical in both places.
+[`extension/`](extension/) folder of this project (version 0.1.0, beta). Both browsers are
+built from one shared source tree (`extension/src/`) plus a small per-browser manifest
+(`extension/firefox/manifest.json`, `extension/chrome/manifest.json`); run
+
+    python extension/build.py
+
+to assemble `dist/extensions/firefox/`, `dist/extensions/chrome/` and a ZIP for each. The two
+builds differ only in the manifest shape and background type, so they stay in sync by
+construction (`tests/test_extension_files.py` checks the build).
 
 What it does:
 
@@ -185,7 +190,8 @@ host:
 
 - the daryafter package installs the host system-wide for Firefox
   (`/usr/lib/mozilla/native-messaging-hosts/daryafter.json`) — works out of the box;
-- for Chrome/Chromium, run `extension/native-host/install.sh` once and set `CHROME_ID` to the
+- for Chrome/Chromium, run `/usr/share/daryafter/native-host/install.sh` (or
+  `extension/native-host/install.sh` in a git checkout) once and set `CHROME_ID` to the
   extension ID shown on `chrome://extensions` (unpacked extensions have a path-derived ID):
   `CHROME_ID=abcd... ./extension/native-host/install.sh`;
 - the pop-up also shows a **Start Daryafter** button whenever the app is not reachable.
@@ -193,20 +199,25 @@ host:
 ### Install in Firefox (temporary, for testing)
 
 1. Start Daryafter.
-2. Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on...**
-3. Pick `extension/manifest.json` — or **any** file inside the `extension/` folder; the Firefox
-   manifest sits at the folder root, so any pick works.
-4. If auto-download does nothing, open `about:addons` > the Daryafter extension >
+2. Run `python extension/build.py` if you have not already.
+3. Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on...**
+4. Pick `dist/extensions/firefox/manifest.json` (or the
+   `dist/extensions/daryafter-firefox-0.1.0.zip` file). Installed from a package, use
+   `/usr/share/daryafter/extensions/firefox/manifest.json`.
+5. If auto-download does nothing, open `about:addons` > the Daryafter extension >
    **Permissions** and make sure *"Access your data for all websites"* is enabled.
    Temporary add-ons are removed when Firefox closes; load them again next time.
 
 ### Install in Chrome/Chromium/Edge/Brave
 
 1. Start Daryafter.
-2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**.
-3. Pick the `extension/chrome/` folder (Chrome's manifest is at its root).
+2. Run `python extension/build.py` if you have not already.
+3. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**.
+4. Pick `dist/extensions/chrome/` (or `/usr/share/daryafter/extensions/chrome/` from the
+   package). Chrome's manifest is at that folder's root.
 
 Once the extension is signed and published, installation will be a one-click store link.
+
 
 ## Command line
 

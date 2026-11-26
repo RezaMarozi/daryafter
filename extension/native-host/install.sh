@@ -13,8 +13,14 @@
 set -eu
 
 here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-host="$here/daryafter_native_host.py"
-[ -x "$host" ] || chmod +x "$host"
+# In a packaged install the host lives in /usr/lib; in a git checkout it sits
+# next to this script.
+if [ -x /usr/lib/daryafter/daryafter-native-host ]; then
+    host=/usr/lib/daryafter/daryafter-native-host
+else
+    host="$here/daryafter_native_host.py"
+    [ -x "$host" ] || chmod +x "$host"
+fi
 
 firefox_dir="$HOME/.mozilla/native-messaging-hosts"
 chrome_dir="$HOME/.config/google-chrome/NativeMessagingHosts"
